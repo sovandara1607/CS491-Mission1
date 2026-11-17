@@ -1,0 +1,177 @@
+{
+  "products": [
+    {
+      "id": "prod-001",
+      "sku": "ANC-HP-PRO",
+      "name": "AeroSound Pro Wireless Headphones",
+      "description": "Active Noise Cancellation, 40-hour battery life, studio-grade sound with spatial audio.",
+      "price": 129.99,
+      "category": "Audio",
+      "image": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80",
+      "stock": 43
+    },
+    {
+      "id": "prod-002",
+      "sku": "SMART-WATCH-ULTRA",
+      "name": "TitanFit Smartwatch Ultra",
+      "description": "AMOLED Always-On display, ECG heart tracker, GPS navigation, and 50m water resistance.",
+      "price": 199.5,
+      "category": "Wearables",
+      "image": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&q=80",
+      "stock": 30
+    },
+    {
+      "id": "prod-003",
+      "sku": "MECH-KB-RGB",
+      "name": "Vortex RGB Mechanical Keyboard",
+      "description": "Hot-swappable switches, PBT double-shot keycaps, Bluetooth 5.2 and USB-C wireless.",
+      "price": 89,
+      "category": "Accessories",
+      "image": "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=800&q=80",
+      "stock": 25
+    },
+    {
+      "id": "prod-004",
+      "sku": "PWR-BNK-65W",
+      "name": "VoltSpeed 20,000mAh Power Bank",
+      "description": "65W Power Delivery fast charging, dual USB-C ports, capable of charging laptops and phones.",
+      "price": 49.99,
+      "category": "Accessories",
+      "image": "https://images.unsplash.com/photo-1609592426867-b5055b85a3fd?w=800&q=80",
+      "stock": 60
+    },
+    {
+      "id": "prod-005",
+      "sku": "DESK-LAMP-SMART",
+      "name": "Lumina Smart Desk Lamp",
+      "description": "Eye-caring ambient light bar, wireless phone charging base, temperature & brightness control.",
+      "price": 59,
+      "category": "Home & Office",
+      "image": "https://images.unsplash.com/photo-1534349762230-e0cadf78f5da?w=800&q=80",
+      "stock": 20
+    },
+    {
+      "id": "prod-006",
+      "sku": "USB-DOCK-10IN1",
+      "name": "HyperHub 10-in-1 USB-C Dock",
+      "description": "Dual 4K HDMI, 100W PD passthrough, Gigabit Ethernet, SD card slots, and high-speed USB 3.2.",
+      "price": 74.99,
+      "category": "Accessories",
+      "image": "https://images.unsplash.com/photo-1616440347437-b1c73416efc2?w=800&q=80",
+      "stock": 35
+    }
+  ],
+  "orders": [
+    {
+      "customerName": "John Smith",
+      "customerPhone": "+14155557788",
+      "customerAddress": "100 Market St, San Francisco",
+      "items": [
+        {
+          "productId": "prod-001",
+          "productName": "AeroSound Pro Wireless Headphones",
+          "quantity": 2,
+          "unitPrice": 129.99,
+          "totalPrice": 259.98
+        }
+      ],
+      "totalAmount": 259.98,
+      "currency": "USD",
+      "status": "CONFIRMED",
+      "channel": "telegram",
+      "channelUserId": "test_u1",
+      "paymentMethod": "COD",
+      "notes": "Customer ordered via Telegram Bot",
+      "id": "ORD-98564",
+      "createdAt": "2026-11-17T02:34:48.460Z",
+      "updatedAt": "2026-11-17T02:34:48.460Z"
+    },
+    {
+      "id": "ORD-98214",
+      "customerName": "Sarah Jenkins",
+      "customerPhone": "+14155550192",
+      "customerAddress": "742 Evergreen Terrace, Springfield",
+      "items": [
+        {
+          "productId": "prod-001",
+          "productName": "AeroSound Pro Wireless Headphones",
+          "quantity": 1,
+          "unitPrice": 129.99,
+          "totalPrice": 129.99
+        }
+      ],
+      "totalAmount": 129.99,
+      "currency": "USD",
+      "status": "PROCESSING",
+      "channel": "telegram",
+      "channelUserId": "tg_7392184",
+      "paymentMethod": "COD",
+      "notes": "Ordered via Telegram Bot",
+      "createdAt": "2026-11-16T22:34:20.996Z",
+      "updatedAt": "2026-11-17T00:34:20.999Z"
+    },
+    {
+      "id": "ORD-98215",
+      "customerName": "Alex Rodriguez",
+      "customerPhone": "+14155550234",
+      "customerAddress": "120 Market St, Suite 400, San Francisco, CA",
+      "items": [
+        {
+          "productId": "prod-002",
+          "productName": "TitanFit Smartwatch Ultra",
+          "quantity": 1,
+          "unitPrice": 199.5,
+          "totalPrice": 199.5
+        },
+        {
+          "productId": "prod-004",
+          "productName": "VoltSpeed 20,000mAh Power Bank",
+          "quantity": 2,
+          "unitPrice": 49.99,
+          "totalPrice": 99.98
+        }
+      ],
+      "totalAmount": 299.48,
+      "currency": "USD",
+      "status": "CONFIRMED",
+      "channel": "whatsapp",
+      "channelUserId": "+14155550234",
+      "paymentMethod": "BANK_TRANSFER",
+      "notes": "Customer placed order via WhatsApp Chat",
+      "createdAt": "2026-11-16T18:34:20.999Z",
+      "updatedAt": "2026-11-16T21:34:20.999Z"
+    },
+    {
+      "id": "ORD-98216",
+      "customerName": "David Kim",
+      "customerPhone": "+14155550888",
+      "customerAddress": "888 Broadway St, New York, NY",
+      "items": [
+        {
+          "productId": "prod-003",
+          "productName": "Vortex RGB Mechanical Keyboard",
+          "quantity": 1,
+          "unitPrice": 89,
+          "totalPrice": 89
+        }
+      ],
+      "totalAmount": 89,
+      "currency": "USD",
+      "status": "DELIVERED",
+      "channel": "web",
+      "paymentMethod": "ONLINE_PAYMENT",
+      "notes": "Online Web Store Checkout",
+      "createdAt": "2026-11-15T02:34:20.999Z",
+      "updatedAt": "2026-11-16T02:34:20.999Z"
+    }
+  ],
+  "sessions": {
+    "whatsapp:+14155551234": {
+      "userId": "+14155551234",
+      "channel": "whatsapp",
+      "step": "IDLE",
+      "cart": [],
+      "updatedAt": 1794882881960
+    }
+  }
+}
