@@ -49,7 +49,7 @@ export default function HomePage() {
   });
 
   const getWhatsAppProductLink = (product: Product) => {
-    const phone = '14155550199';
+    const phone = (process.env.NEXT_PUBLIC_WHATSAPP_PHONE || '85599944923').replace(/[^0-9]/g, '');
     const msg = `Hello NovaMart! 🛍️\nI would like to order *${product.name}* (Price: $${product.price.toFixed(2)}, SKU: ${product.sku}).\nPlease confirm delivery availability.`;
     return `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
   };
@@ -95,11 +95,11 @@ export default function HomePage() {
             </a>
 
             <Link
-              href="/simulator"
-              className="px-6 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium text-sm transition backdrop-blur-md border border-white/10 flex items-center gap-2"
+              href="/telegram-app"
+              className="px-6 py-3 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 text-sky-200 font-medium text-sm transition backdrop-blur-md border border-sky-400/30 flex items-center gap-2"
             >
-              <Zap className="w-4 h-4 text-amber-400" />
-              <span>Test Chatbot Simulator</span>
+              <Send className="w-4 h-4 text-sky-400" />
+              <span>Open in Telegram</span>
             </Link>
 
             <Link
@@ -358,18 +358,21 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Interactive action */}
+          {/* Direct Telegram Action */}
           <div className="mt-8 pt-8 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="text-xs text-slate-400 text-center sm:text-left">
-              Want to see how an automated conversational purchase works in action?
+              Order directly without app downloads: chat with our official verified bot.
             </div>
-            <Link
-              href="/simulator"
+            <a
+              href="https://t.me/nova123456789_bot"
+              target="_blank"
+              rel="noreferrer"
               className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold text-xs hover:opacity-90 transition shadow-md flex items-center gap-2"
             >
-              <span>Launch Telegram & WhatsApp Simulator</span>
+              <Send className="w-3.5 h-3.5" />
+              <span>Chat with @nova123456789_bot</span>
               <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
+            </a>
           </div>
         </div>
       </section>

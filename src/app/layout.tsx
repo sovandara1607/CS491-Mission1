@@ -51,7 +51,7 @@ export default function RootLayout({
                 <div>
                   <h4 className="text-xs font-semibold text-white uppercase tracking-wider mb-3">Platform Tools</h4>
                   <ul className="space-y-2 text-xs">
-                    <li><a href="/simulator" className="hover:text-white transition">Chatbots Test Simulator</a></li>
+                    <li><a href="https://t.me/nova123456789_bot" target="_blank" rel="noreferrer" className="hover:text-white transition">Official Telegram Bot</a></li>
                     <li><a href="/admin" className="hover:text-white transition">Unified Orders Management</a></li>
                     <li><a href="/telegram-app" className="hover:text-white transition">Telegram Mini App Preview</a></li>
                     <li><a href="/api/webhook/telegram" className="hover:text-white transition">Telegram Webhook Endpoint</a></li>

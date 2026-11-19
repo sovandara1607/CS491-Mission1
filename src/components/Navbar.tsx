@@ -13,7 +13,6 @@ export default function Navbar() {
   const navLinks = [
     { href: '/', label: 'Storefront', icon: Sparkles },
     { href: '/telegram-app', label: 'Telegram Mini App', icon: Smartphone },
-    { href: '/simulator', label: 'Bot Simulator', icon: Bot },
     { href: '/admin', label: 'Admin Orders', icon: LayoutDashboard }
   ];
 
@@ -62,7 +61,7 @@ export default function Navbar() {
           <div className="flex items-center gap-3">
             {/* Quick WhatsApp button */}
             <a
-              href="https://wa.me/14155550199?text=Hello%20NovaMart!%20I%20have%20a%20question%20about%20your%20products"
+              href={`https://wa.me/${(process.env.NEXT_PUBLIC_WHATSAPP_PHONE || '85599944923').replace(/[^0-9]/g, '')}?text=Hello%20NovaMart!%20I%20have%20a%20question%20about%20your%20products`}
               target="_blank"
               rel="noreferrer"
               className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition border border-emerald-200"

@@ -57,7 +57,7 @@ export default function CartDrawer() {
   };
 
   const handleWhatsAppOrder = () => {
-    const businessPhone = process.env.NEXT_PUBLIC_WHATSAPP_PHONE || '14155550199';
+    const businessPhone = (process.env.NEXT_PUBLIC_WHATSAPP_PHONE || '85599944923').replace(/[^0-9]/g, '');
     let text = `Hello NovaMart! 🛍️\nI would like to order the following items from your website:\n\n`;
 
     cart.forEach(item => {
