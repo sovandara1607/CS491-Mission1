@@ -1,40 +1,141 @@
+@import url("https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700;800&family=Google+Sans+Text:wght@400;500;600;700&family=Roboto+Mono:wght@400;500;600;700&family=Noto+Sans+Khmer:wght@400;500;600;700;800&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 15, 23, 42;
-  --background-start-rgb: 248, 250, 252;
-  --background-end-rgb: 255, 255, 255;
+  --font-sans: "Google Sans", "Google Sans Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Khmer", sans-serif;
+  --font-mono: "Roboto Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  /* KhmerKit signature dark palette */
+  --bg-base: #0c0d12;
+  --ink: #ffffff;
+  --muted: #9ca3af;
+  --subtle: #71717a;
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.2);
+  --card-bg: rgba(18, 20, 27, 0.75);
+  --card-bg-subtle: rgba(255, 255, 255, 0.03);
+  --input-bg: rgba(0, 0, 0, 0.35);
+  
+  --cta-bg: #ffffff;
+  --cta-ink: #000000;
+  --cta-hover: #ededed;
+  
+  --secondary-btn-bg: rgba(255, 255, 255, 0.04);
+  --secondary-btn-border: rgba(255, 255, 255, 0.15);
+  --secondary-btn-hover: rgba(255, 255, 255, 0.08);
+  
+  --drawer-bg: rgba(12, 13, 18, 0.98);
+  --hover-subtle: rgba(255, 255, 255, 0.04);
+  
+  --accent-purple: #a78bfa;
+  --accent-blue: #02b5f4;
+  --accent-amber: #fbb800;
+  --accent-green: #10b981;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  color: var(--ink);
+  background-color: var(--bg-base);
+  background-image: 
+    radial-gradient(ellipse 65% 55% at 88% 20%, rgba(95, 35, 75, 0.32) 0, rgba(40, 25, 52, 0.16) 50%, transparent 75%),
+    radial-gradient(ellipse 55% 45% at 18% 35%, rgba(30, 42, 65, 0.25) 0, transparent 70%),
+    radial-gradient(ellipse 50% 50% at 50% 100%, rgba(10, 11, 14, 1) 0, rgba(8, 9, 12, 1) 100%);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.5;
   min-height: 100vh;
-  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
-/* Custom scrollbars */
+/* Custom sharp scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #0c0d12;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.15);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+.font-khmer {
+  font-family: "Noto Sans Khmer", var(--font-sans);
+}
+
+/* KhmerKit style hairline border boxes */
+.kk-card {
+  background: var(--card-bg);
+  border: 1px solid var(--line);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.kk-card:hover {
+  border-color: var(--line-strong);
+}
+
+.kk-tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--subtle);
+  text-transform: uppercase;
+}
+
+.kk-btn-primary {
+  background-color: var(--cta-bg);
+  color: var(--cta-ink);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 8px 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.15s ease;
+  letter-spacing: -0.01em;
+}
+
+.kk-btn-primary:hover {
+  background-color: var(--cta-hover);
+  transform: translateY(-1px);
+}
+
+.kk-btn-secondary {
+  background: var(--secondary-btn-bg);
+  border: 1px solid var(--secondary-btn-border);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.kk-btn-secondary:hover {
+  background: var(--secondary-btn-hover);
+  border-color: var(--line-strong);
 }

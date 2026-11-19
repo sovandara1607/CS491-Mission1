@@ -14,61 +14,72 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const botUsername = (process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || 'nova123456789_bot').replace(/^@/, '');
+  const waPhone = (process.env.NEXT_PUBLIC_WHATSAPP_PHONE || '85599944923').replace(/[^0-9]/g, '');
+
   return (
-    <html lang="en">
-      <body className="antialiased bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+    <html lang="en" className="dark">
+      <body className="antialiased min-h-screen flex flex-col text-[var(--ink)]">
         <CartProvider>
           <Navbar />
           <CartDrawer />
           <main className="flex-1">
             {children}
           </main>
-          <footer className="bg-slate-900 text-slate-400 py-12 border-t border-slate-800">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+          
+          {/* KhmerKit Style Footer */}
+          <footer className="border-t border-[var(--line)] bg-[#08090c] py-12 text-xs font-mono">
+            <div className="max-w-[1140px] mx-auto px-4 sm:px-8 space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                
+                {/* Brand Column */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold">
-                      N
-                    </div>
-                    <span className="text-lg font-bold text-white">NovaMart</span>
+                    <span className="w-5 h-5 bg-white text-black flex items-center justify-center font-khmer text-[11px] font-bold leading-none select-none">
+                      ន
+                    </span>
+                    <span className="text-sm font-bold text-white font-sans">NovaMart</span>
                   </div>
-                  <p className="text-xs text-slate-400 leading-relaxed">
-                    Zero-app mobile commerce. Customers order seamlessly through the website, Telegram bots, or WhatsApp Business without downloading native apps.
+                  <p className="text-[11px] text-[var(--subtle)] leading-relaxed font-sans">
+                    Zero-app mobile retail infrastructure. Orders route directly from Telegram and WhatsApp into one unified database.
                   </p>
                 </div>
 
-                <div>
-                  <h4 className="text-xs font-semibold text-white uppercase tracking-wider mb-3">Order Channels</h4>
-                  <ul className="space-y-2 text-xs">
-                    <li><span className="text-slate-300">Web Storefront:</span> Instant online checkout</li>
-                    <li><span className="text-slate-300">Telegram Bot:</span> In-chat catalog & checkout</li>
-                    <li><span className="text-slate-300">Telegram Mini App:</span> Native webview store</li>
-                    <li><span className="text-slate-300">WhatsApp Cloud:</span> Click-to-chat & automated bot</li>
+                {/* Channels */}
+                <div className="space-y-2">
+                  <span className="kk-tag">CHANNELS</span>
+                  <ul className="space-y-1.5 text-[11px] text-[var(--muted)]">
+                    <li><a href={`https://t.me/${botUsername}`} target="_blank" rel="noreferrer" className="hover:text-white transition">Telegram Bot (@{botUsername}) ↗</a></li>
+                    <li><a href="/telegram-app" className="hover:text-white transition">Telegram Mini App (/tma)</a></li>
+                    <li><a href={`https://wa.me/${waPhone}`} target="_blank" rel="noreferrer" className="hover:text-white transition">WhatsApp Direct (+{waPhone}) ↗</a></li>
+                    <li><a href="/" className="hover:text-white transition">Web Storefront</a></li>
                   </ul>
                 </div>
 
-                <div>
-                  <h4 className="text-xs font-semibold text-white uppercase tracking-wider mb-3">Platform Tools</h4>
-                  <ul className="space-y-2 text-xs">
-                    <li><a href="https://t.me/nova123456789_bot" target="_blank" rel="noreferrer" className="hover:text-white transition">Official Telegram Bot</a></li>
-                    <li><a href="/admin" className="hover:text-white transition">Unified Orders Management</a></li>
-                    <li><a href="/telegram-app" className="hover:text-white transition">Telegram Mini App Preview</a></li>
-                    <li><a href="/api/webhook/telegram" className="hover:text-white transition">Telegram Webhook Endpoint</a></li>
-                    <li><a href="/api/webhook/whatsapp" className="hover:text-white transition">WhatsApp Webhook Endpoint</a></li>
+                {/* Operations */}
+                <div className="space-y-2">
+                  <span className="kk-tag">SYSTEM</span>
+                  <ul className="space-y-1.5 text-[11px] text-[var(--muted)]">
+                    <li><a href="/admin" className="hover:text-white transition">Admin Orders Dispatch</a></li>
+                    <li><a href="/api/products" className="hover:text-white transition">JSON Catalog Endpoint</a></li>
+                    <li><a href="/api/orders" className="hover:text-white transition">Orders REST API</a></li>
+                    <li><a href="/api/webhook/telegram" className="hover:text-white transition">Telegram Webhook Router</a></li>
                   </ul>
                 </div>
 
-                <div>
-                  <h4 className="text-xs font-semibold text-white uppercase tracking-wider mb-3">Company Policy</h4>
-                  <p className="text-xs text-slate-400 leading-relaxed">
-                    By leveraging messaging platforms, our company reduces app development & maintenance costs by 85% while meeting customers where they spend 90% of their mobile screen time.
+                {/* Specs */}
+                <div className="space-y-2">
+                  <span className="kk-tag">ENGINEERING</span>
+                  <p className="text-[11px] text-[var(--subtle)] leading-relaxed font-sans">
+                    Built with Next.js, Node.js, Telegram Bot API & WebApp SDK. Eliminates 100% of app store review overhead.
                   </p>
                 </div>
+
               </div>
 
-              <div className="pt-8 border-t border-slate-800 text-center text-xs text-slate-500">
-                © {new Date().getFullYear()} NovaMart Technologies. Omnichannel Commerce Architecture.
+              <div className="pt-6 border-t border-[var(--line)] flex flex-col sm:flex-row items-center justify-between gap-2 text-[10px] text-[var(--subtle)]">
+                <span>© {new Date().getFullYear()} NOVAMART TECHNOLOGIES. ALL RIGHTS RESERVED.</span>
+                <span>STATUS: 100% OPERATIONAL // PHNOM PENH & GLOBAL</span>
               </div>
             </div>
           </footer>

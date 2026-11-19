@@ -4,100 +4,100 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
-import { ShoppingBag, Send, MessageSquare, LayoutDashboard, Bot, Sparkles, Smartphone } from 'lucide-react';
+import { ShoppingBag, Send, MessageSquare, LayoutDashboard, Smartphone, Sparkles, ArrowUpRight } from 'lucide-react';
 
 export default function Navbar() {
   const pathname = usePathname();
   const { totalItems, setIsCartOpen } = useCart();
+  const botUsername = (process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || 'nova123456789_bot').replace(/^@/, '');
+  const waPhone = (process.env.NEXT_PUBLIC_WHATSAPP_PHONE || '85599944923').replace(/[^0-9]/g, '');
 
   const navLinks = [
-    { href: '/', label: 'Storefront', icon: Sparkles },
-    { href: '/telegram-app', label: 'Telegram Mini App', icon: Smartphone },
-    { href: '/admin', label: 'Admin Orders', icon: LayoutDashboard }
+    { href: '/', label: 'Catalog' },
+    { href: '/telegram-app', label: 'Telegram Mini App' },
+    { href: '/admin', label: 'Admin Orders' }
   ];
 
   return (
-    <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-white font-bold text-xl shadow-md shadow-indigo-600/20">
-              N
-            </div>
-            <div>
-              <span className="text-xl font-bold bg-gradient-to-r from-slate-900 to-indigo-950 bg-clip-text text-transparent">
-                NovaMart
+    <header className="w-full border-b border-[var(--line)] bg-[#0c0d12]/80 backdrop-blur-md sticky top-0 z-40">
+      <div className="max-w-[1140px] mx-auto px-4 sm:px-8 h-16 flex items-center justify-between">
+        
+        {/* Brand with KhmerKit glyph mark */}
+        <div className="flex items-center gap-6">
+          <Link href="/" className="inline-flex items-center gap-2.5 group">
+            <span className="w-6 h-6 bg-white text-black flex items-center justify-center font-khmer text-[13px] font-bold leading-none select-none transition group-hover:scale-105">
+              ន
+            </span>
+            <span className="text-[15px] font-bold tracking-tight text-white flex items-center gap-1.5">
+              <span>NovaMart</span>
+              <span className="text-[10px] font-mono text-[var(--subtle)] font-normal hidden sm:inline">
+                / v1.0
               </span>
-              <span className="block text-[10px] text-slate-500 font-medium tracking-wider uppercase">
-                Web & Chat Commerce
-              </span>
-            </div>
+            </span>
           </Link>
 
-          {/* Nav links */}
-          <nav className="hidden md:flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
+          {/* Navigation Links */}
+          <nav className="hidden md:flex items-center gap-5 border-l border-[var(--line)] pl-6">
             {navLinks.map(link => {
-              const Icon = link.icon;
               const isActive = pathname === link.href;
               return (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                  className={`text-[13px] font-medium transition ${
                     isActive
-                      ? 'bg-white text-indigo-700 shadow-sm'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+                      ? 'text-white'
+                      : 'text-[var(--muted)] hover:text-white'
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
-                  <span>{link.label}</span>
+                  {link.label}
                 </Link>
               );
             })}
           </nav>
-
-          {/* Right Actions */}
-          <div className="flex items-center gap-3">
-            {/* Quick WhatsApp button */}
-            <a
-              href={`https://wa.me/${(process.env.NEXT_PUBLIC_WHATSAPP_PHONE || '85599944923').replace(/[^0-9]/g, '')}?text=Hello%20NovaMart!%20I%20have%20a%20question%20about%20your%20products`}
-              target="_blank"
-              rel="noreferrer"
-              className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition border border-emerald-200"
-              title="Chat on WhatsApp"
-            >
-              <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
-              <span>WhatsApp</span>
-            </a>
-
-            {/* Quick Telegram button */}
-            <a
-              href={`https://t.me/${(process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || 'nova123456789_bot').replace(/^@/, '')}`}
-              target="_blank"
-              rel="noreferrer"
-              className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-sky-50 text-sky-700 hover:bg-sky-100 transition border border-sky-200"
-              title="Chat on Telegram"
-            >
-              <Send className="w-3.5 h-3.5 text-sky-600" />
-              <span>Telegram Bot</span>
-            </a>
-
-            {/* Cart Trigger */}
-            <button
-              onClick={() => setIsCartOpen(true)}
-              className="relative p-2.5 rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition flex items-center justify-center shadow-sm"
-              aria-label="View Cart"
-            >
-              <ShoppingBag className="w-5 h-5" />
-              {totalItems > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[11px] font-bold w-5 h-5 rounded-full flex items-center justify-center ring-2 ring-white animate-pulse">
-                  {totalItems}
-                </span>
-              )}
-            </button>
-          </div>
         </div>
+
+        {/* Right Actions */}
+        <div className="flex items-center gap-3">
+          {/* Live Telegram Bot status pill */}
+          <a
+            href={`https://t.me/${botUsername}`}
+            target="_blank"
+            rel="noreferrer"
+            className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-mono font-medium border border-[var(--line)] bg-[var(--card-bg-subtle)] text-[var(--muted)] hover:text-white hover:border-[var(--line-strong)] transition"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-green)] animate-pulse"></span>
+            <span>@{botUsername}</span>
+            <ArrowUpRight className="w-3 h-3 text-[var(--subtle)]" />
+          </a>
+
+          {/* WhatsApp Direct */}
+          <a
+            href={`https://wa.me/${waPhone}?text=Hello%20NovaMart!%20I%20have%20an%20order%20inquiry`}
+            target="_blank"
+            rel="noreferrer"
+            className="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-mono border border-[var(--line)] bg-[var(--card-bg-subtle)] text-[#25D366] hover:border-[var(--line-strong)] transition"
+          >
+            <MessageSquare className="w-3 h-3" />
+            <span>WA: +{waPhone}</span>
+          </a>
+
+          {/* Cart Drawer Trigger */}
+          <button
+            onClick={() => setIsCartOpen(true)}
+            className="relative px-3 py-1.5 bg-white text-black hover:bg-slate-200 text-xs font-bold transition flex items-center gap-2 select-none"
+            aria-label="View Cart"
+          >
+            <ShoppingBag className="w-3.5 h-3.5" />
+            <span className="font-mono">CART</span>
+            {totalItems > 0 && (
+              <span className="bg-black text-white px-1.5 py-0.2 text-[10px] font-mono font-bold ml-0.5">
+                {totalItems}
+              </span>
+            )}
+          </button>
+        </div>
+
       </div>
     </header>
   );

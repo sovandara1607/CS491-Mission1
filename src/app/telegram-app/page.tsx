@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Product } from '@/lib/types';
-import { ShoppingBag, ArrowLeft, Send, CheckCircle2, Minus, Plus } from 'lucide-react';
+import { ShoppingBag, ArrowLeft, Send, Check, Minus, Plus, ArrowRight, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 
 export default function TelegramMiniApp() {
@@ -18,7 +18,7 @@ export default function TelegramMiniApp() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    // Check for Telegram WebApp environment
+    // Check Telegram WebApp environment
     if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp) {
       const tg = (window as any).Telegram.WebApp;
       tg.ready();
@@ -96,7 +96,7 @@ export default function TelegramMiniApp() {
           totalAmount,
           channel: 'telegram',
           paymentMethod: 'COD',
-          notes: `Placed via Telegram Mini App (TMA). User ID: ${tgUser?.id || 'Browser Preview'}`
+          notes: `Placed via Telegram Mini App (TMA). User ID: ${tgUser?.id || 'Telegram User'}`
         })
       });
 
@@ -105,7 +105,6 @@ export default function TelegramMiniApp() {
         setCreatedOrder(data.order);
         setStep('success');
 
-        // If running inside Telegram WebApp, notify Telegram
         if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp) {
           try {
             (window as any).Telegram.WebApp.sendData(JSON.stringify({
@@ -127,27 +126,34 @@ export default function TelegramMiniApp() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 flex justify-center py-6 px-4">
-      {/* Mobile Frame Container */}
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col min-h-[640px]">
-        {/* Telegram App Header */}
-        <div className="bg-[#242f3d] text-white px-4 py-3 flex items-center justify-between shadow-sm">
-          <div className="flex items-center gap-2">
+    <div className="min-h-screen bg-[#0c0d12] flex justify-center py-4 sm:py-8 px-2 sm:px-4 text-white font-sans">
+      
+      {/* Mini App Shell Container */}
+      <div className="w-full max-w-md bg-[#12141b] border border-[var(--line)] overflow-hidden flex flex-col min-h-[640px] shadow-2xl">
+        
+        {/* KhmerKit Style Mini App Header */}
+        <div className="bg-[#0c0d12] border-b border-[var(--line)] px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
             {step !== 'catalog' ? (
               <button
                 onClick={() => setStep('catalog')}
-                className="p-1 rounded-full text-slate-300 hover:text-white"
+                className="p-1 border border-[var(--line)] hover:border-white text-[var(--muted)] hover:text-white transition"
               >
-                <ArrowLeft className="w-5 h-5" />
+                <ArrowLeft className="w-4 h-4" />
               </button>
             ) : (
-              <div className="w-8 h-8 rounded-full bg-[#2AABEE] flex items-center justify-center text-white font-bold text-xs">
-                <Send className="w-4 h-4 -rotate-12 translate-x-0.5" />
-              </div>
+              <span className="w-6 h-6 bg-white text-black flex items-center justify-center font-khmer text-[12px] font-bold leading-none select-none">
+                ន
+              </span>
             )}
             <div>
-              <h2 className="text-sm font-bold leading-tight">NovaMart Mini App</h2>
-              <p className="text-[10px] text-sky-400">Telegram In-App Storefront</p>
+              <h2 className="text-xs font-bold font-mono tracking-tight text-white flex items-center gap-1.5">
+                <span>NOVAMART // TMA</span>
+              </h2>
+              <p className="text-[10px] font-mono text-[var(--subtle)] flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-green)] animate-pulse"></span>
+                <span>ONLINE / TELEGRAM</span>
+              </p>
             </div>
           </div>
 
@@ -155,88 +161,94 @@ export default function TelegramMiniApp() {
             {step === 'catalog' && (
               <button
                 onClick={() => cart.length > 0 && setStep('checkout')}
-                className="relative p-2 rounded-xl bg-slate-800 text-white"
+                className="px-2.5 py-1 bg-white text-black text-xs font-mono font-bold flex items-center gap-1.5 hover:bg-slate-200 transition"
               >
-                <ShoppingBag className="w-4 h-4 text-sky-300" />
-                {totalItems > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
-                    {totalItems}
-                  </span>
-                )}
+                <ShoppingBag className="w-3.5 h-3.5" />
+                <span>{totalItems}</span>
               </button>
             )}
           </div>
         </div>
 
-        {/* Telegram User Notice */}
-        <div className="bg-sky-50 px-4 py-2 border-b border-sky-100 text-[11px] text-sky-800 flex items-center justify-between">
-          <span>{tgUser ? `Logged in as @${tgUser.username || tgUser.first_name}` : 'Running in Telegram WebApp Mode'}</span>
-          <span className="font-semibold text-sky-600">Zero App Install</span>
+        {/* Telegram User Metadata Strip */}
+        <div className="bg-[var(--card-bg-subtle)] border-b border-[var(--line)] px-4 py-1.5 text-[10px] font-mono text-[var(--muted)] flex items-center justify-between">
+          <span>{tgUser ? `@${tgUser.username || tgUser.first_name}` : 'AUTHENTICATED // TMA_SESSION'}</span>
+          <span className="text-[var(--accent-purple)]">v1.0-STABLE</span>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4">
+        {/* Dynamic Body Content */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          
           {step === 'catalog' && (
             <div className="space-y-4">
-              <div className="bg-gradient-to-r from-sky-500 to-indigo-600 text-white p-4 rounded-2xl shadow-sm">
-                <h3 className="font-bold text-base">Shop Inside Telegram</h3>
-                <p className="text-xs text-sky-100 mt-1">
-                  Enjoy the full native e-commerce store experience directly in your chat messenger.
+              
+              {/* Top Banner */}
+              <div className="p-3 border border-[var(--line)] bg-[var(--card-bg-subtle)] space-y-1">
+                <div className="flex items-center gap-1.5 text-[10px] font-mono text-[var(--accent-green)]">
+                  <span>● IN-APP STOREFRONT</span>
+                </div>
+                <p className="text-xs text-[var(--muted)] leading-relaxed">
+                  Browse products and purchase with instant cash on delivery (COD) without leaving Telegram.
                 </p>
               </div>
 
+              {/* Products List */}
               {loading ? (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {[1, 2, 3].map(n => (
-                    <div key={n} className="h-24 bg-slate-100 rounded-xl animate-pulse" />
+                    <div key={n} className="h-20 border border-[var(--line)] bg-[var(--card-bg)] animate-pulse" />
                   ))}
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   {products.map(p => {
                     const inCart = cart.find(i => i.product.id === p.id);
                     return (
                       <div
                         key={p.id}
-                        className="flex gap-3 p-3 rounded-2xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition items-center"
+                        className="p-3 border border-[var(--line)] bg-[var(--card-bg)] hover:border-[var(--line-strong)] transition flex gap-3 items-center"
                       >
                         <img
                           src={p.image}
                           alt={p.name}
-                          className="w-16 h-16 rounded-xl object-cover bg-white border border-slate-200"
+                          className="w-14 h-14 object-cover border border-[var(--line)] bg-black/40 flex-shrink-0"
                         />
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-xs font-bold text-slate-900 truncate">{p.name}</h4>
-                          <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">{p.description}</p>
-                          <span className="text-xs font-extrabold text-indigo-600 mt-1 block">
-                            ${p.price.toFixed(2)}
-                          </span>
+                        <div className="flex-1 min-w-0 space-y-0.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[9px] font-mono text-[var(--subtle)]">{p.sku}</span>
+                            <span className="text-xs font-mono font-bold text-white">${p.price.toFixed(2)}</span>
+                          </div>
+                          <h4 className="text-xs font-bold text-white truncate">{p.name}</h4>
+                          <p className="text-[10px] text-[var(--muted)] line-clamp-1">{p.description}</p>
                         </div>
 
-                        {inCart ? (
-                          <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg p-1">
+                        {/* Action buttons */}
+                        <div className="flex-shrink-0">
+                          {inCart ? (
+                            <div className="flex items-center border border-[var(--line)] bg-[#0c0d12]">
+                              <button
+                                onClick={() => updateQty(p.id, -1)}
+                                className="w-6 h-6 flex items-center justify-center text-[var(--muted)] hover:text-white"
+                              >
+                                <Minus className="w-3 h-3" />
+                              </button>
+                              <span className="text-xs font-mono font-bold px-1.5">{inCart.quantity}</span>
+                              <button
+                                onClick={() => updateQty(p.id, 1)}
+                                className="w-6 h-6 flex items-center justify-center text-[var(--muted)] hover:text-white"
+                              >
+                                <Plus className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ) : (
                             <button
-                              onClick={() => updateQty(p.id, -1)}
-                              className="w-5 h-5 rounded flex items-center justify-center text-slate-600 hover:bg-slate-100 text-xs"
+                              onClick={() => addToCart(p)}
+                              className="px-2.5 py-1.5 bg-white text-black text-[11px] font-mono font-bold hover:bg-slate-200 transition"
                             >
-                              <Minus className="w-3 h-3" />
+                              + BUY
                             </button>
-                            <span className="text-xs font-bold px-1">{inCart.quantity}</span>
-                            <button
-                              onClick={() => updateQty(p.id, 1)}
-                              className="w-5 h-5 rounded flex items-center justify-center text-slate-600 hover:bg-slate-100 text-xs"
-                            >
-                              <Plus className="w-3 h-3" />
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => addToCart(p)}
-                            className="px-3 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 transition shadow-xs"
-                          >
-                            Add
-                          </button>
-                        )}
+                          )}
+                        </div>
                       </div>
                     );
                   })}
@@ -247,89 +259,106 @@ export default function TelegramMiniApp() {
 
           {step === 'checkout' && (
             <form onSubmit={handleSubmitOrder} className="space-y-4">
-              <h3 className="font-bold text-slate-900 text-sm">Review & Shipping</h3>
+              <div className="flex items-center justify-between pb-2 border-b border-[var(--line)]">
+                <span className="text-xs font-mono font-bold text-white">ORDER SUMMARY</span>
+                <span className="text-[10px] font-mono text-[var(--subtle)]">{cart.length} LINE_ITEMS</span>
+              </div>
 
-              {/* Items in cart */}
-              <div className="space-y-2 border border-slate-200 rounded-2xl p-3 bg-slate-50">
+              {/* Items Table */}
+              <div className="border border-[var(--line)] bg-[var(--card-bg)] divide-y divide-[var(--line)] text-xs">
                 {cart.map(i => (
-                  <div key={i.product.id} className="flex justify-between items-center text-xs">
-                    <span className="font-medium text-slate-800 truncate max-w-[200px]">
+                  <div key={i.product.id} className="p-2.5 flex justify-between items-center">
+                    <span className="truncate max-w-[200px] text-[var(--muted)]">
                       {i.product.name} (x{i.quantity})
                     </span>
-                    <span className="font-bold text-slate-900">
+                    <span className="font-mono font-bold text-white">
                       ${(i.product.price * i.quantity).toFixed(2)}
                     </span>
                   </div>
                 ))}
-                <div className="pt-2 border-t border-slate-200 flex justify-between font-bold text-sm text-slate-900">
-                  <span>Total Amount:</span>
-                  <span>${totalAmount.toFixed(2)}</span>
+                <div className="p-3 bg-[var(--card-bg-subtle)] flex justify-between items-center font-bold font-mono">
+                  <span>TOTAL AMOUNT:</span>
+                  <span className="text-base text-white">${totalAmount.toFixed(2)}</span>
                 </div>
               </div>
 
-              {/* Input fields */}
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">Full Name</label>
-                <input
-                  type="text"
-                  required
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  placeholder="Your Name"
-                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500"
-                />
-              </div>
+              {/* Delivery Details Form */}
+              <div className="space-y-3 pt-2">
+                <div>
+                  <label className="block text-[10px] font-mono text-[var(--subtle)] mb-1">
+                    RECIPIENT_NAME
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    placeholder="Full name"
+                    className="w-full px-3 py-2 text-xs bg-[var(--input-bg)] border border-[var(--line)] text-white focus:outline-none focus:border-[var(--line-strong)] font-mono"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">Phone Number</label>
-                <input
-                  type="tel"
-                  required
-                  value={phone}
-                  onChange={e => setPhone(e.target.value)}
-                  placeholder="+1 555 123 4567"
-                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500"
-                />
-              </div>
+                <div>
+                  <label className="block text-[10px] font-mono text-[var(--subtle)] mb-1">
+                    CONTACT_PHONE
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    value={phone}
+                    onChange={e => setPhone(e.target.value)}
+                    placeholder="099 944 923"
+                    className="w-full px-3 py-2 text-xs bg-[var(--input-bg)] border border-[var(--line)] text-white focus:outline-none focus:border-[var(--line-strong)] font-mono"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">Delivery Address</label>
-                <textarea
-                  required
-                  rows={2}
-                  value={address}
-                  onChange={e => setAddress(e.target.value)}
-                  placeholder="Street, City, Postal Code"
-                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500"
-                />
-              </div>
+                <div>
+                  <label className="block text-[10px] font-mono text-[var(--subtle)] mb-1">
+                    DELIVERY_ADDRESS
+                  </label>
+                  <textarea
+                    required
+                    rows={2}
+                    value={address}
+                    onChange={e => setAddress(e.target.value)}
+                    placeholder="Street, City, Province"
+                    className="w-full px-3 py-2 text-xs bg-[var(--input-bg)] border border-[var(--line)] text-white focus:outline-none focus:border-[var(--line-strong)] font-mono"
+                  />
+                </div>
 
-              <div className="bg-sky-50 p-3 rounded-xl border border-sky-100 text-[11px] text-sky-800">
-                💵 Payment: <strong>Cash on Delivery (COD)</strong> upon package receipt.
+                <div className="p-2.5 border border-[var(--line)] bg-[var(--card-bg-subtle)] text-[11px] font-mono text-[var(--muted)] flex items-center gap-2">
+                  <span className="text-[var(--accent-amber)] font-bold">[!]</span>
+                  <span>PAYMENT: Cash on Delivery (COD)</span>
+                </div>
               </div>
 
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full py-3 bg-[#2AABEE] text-white font-bold rounded-xl text-xs hover:bg-[#229ED9] transition shadow-md disabled:opacity-50"
+                className="w-full py-3 bg-white text-black font-bold font-mono text-xs hover:bg-slate-200 transition flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                {submitting ? 'Placing Order...' : `Confirm & Place Order ($${totalAmount.toFixed(2)})`}
+                {submitting ? 'DISPATCHING...' : `CONFIRM ORDER ($${totalAmount.toFixed(2)}) →`}
               </button>
             </form>
           )}
 
           {step === 'success' && createdOrder && (
-            <div className="text-center py-10 space-y-4">
-              <CheckCircle2 className="w-16 h-16 text-emerald-500 mx-auto" />
-              <h3 className="text-lg font-bold text-slate-900">Order Placed in Telegram!</h3>
-              <p className="text-xs text-slate-600">
-                Order Reference: <strong className="font-mono text-slate-900">#{createdOrder.id}</strong>
-              </p>
-              <div className="bg-slate-50 p-4 rounded-2xl text-left border border-slate-200 text-xs space-y-1.5">
-                <p><span className="text-slate-400">Total:</span> <strong>${createdOrder.totalAmount.toFixed(2)}</strong></p>
-                <p><span className="text-slate-400">Customer:</span> {createdOrder.customerName}</p>
-                <p><span className="text-slate-400">Shipping to:</span> {createdOrder.customerAddress}</p>
-                <p><span className="text-slate-400">Channel:</span> <span className="font-bold text-sky-600 uppercase">Telegram Mini App</span></p>
+            <div className="p-6 border border-[var(--line)] bg-[var(--card-bg)] text-center space-y-4 my-auto">
+              <div className="w-10 h-10 bg-white text-black flex items-center justify-center mx-auto font-bold font-mono">
+                ✓
+              </div>
+              <div>
+                <h3 className="text-base font-bold font-mono text-white">ORDER DISPATCHED</h3>
+                <p className="text-xs font-mono text-[var(--accent-green)] mt-1">
+                  ID: #{createdOrder.id}
+                </p>
+              </div>
+
+              <div className="p-3 border border-[var(--line)] bg-[var(--input-bg)] text-left text-xs font-mono space-y-1.5">
+                <p className="flex justify-between"><span className="text-[var(--subtle)]">CUSTOMER:</span> <span className="text-white">{createdOrder.customerName}</span></p>
+                <p className="flex justify-between"><span className="text-[var(--subtle)]">PHONE:</span> <span className="text-white">{createdOrder.customerPhone}</span></p>
+                <p className="flex justify-between"><span className="text-[var(--subtle)]">TOTAL:</span> <span className="font-bold text-white">${createdOrder.totalAmount.toFixed(2)}</span></p>
+                <p className="flex justify-between"><span className="text-[var(--subtle)]">PAYMENT:</span> <span>CASH_ON_DELIVERY</span></p>
               </div>
 
               <button
@@ -337,30 +366,32 @@ export default function TelegramMiniApp() {
                   setCart([]);
                   setStep('catalog');
                 }}
-                className="w-full bg-[#242f3d] text-white py-2.5 rounded-xl text-xs font-semibold hover:bg-slate-800 transition"
+                className="w-full py-2.5 border border-[var(--line)] text-white hover:bg-white hover:text-black font-mono text-xs font-bold transition"
               >
-                Back to Store
+                RETURN TO CATALOG
               </button>
             </div>
           )}
+
         </div>
 
-        {/* Footer sticky checkout bar for catalog */}
+        {/* Sticky Cart Footer for Catalog view */}
         {step === 'catalog' && cart.length > 0 && (
-          <div className="p-3 bg-white border-t border-slate-100 flex items-center justify-between">
+          <div className="p-3 bg-[#0c0d12] border-t border-[var(--line)] flex items-center justify-between">
             <div>
-              <span className="text-[10px] text-slate-400 block font-medium">Cart Total</span>
-              <span className="text-sm font-bold text-slate-900">${totalAmount.toFixed(2)}</span>
+              <span className="text-[9px] font-mono text-[var(--subtle)] block">TOTAL_ESTIMATE</span>
+              <span className="text-sm font-mono font-bold text-white">${totalAmount.toFixed(2)}</span>
             </div>
             <button
               onClick={() => setStep('checkout')}
-              className="px-5 py-2.5 bg-[#2AABEE] text-white rounded-xl text-xs font-bold hover:bg-[#229ED9] transition shadow-md flex items-center gap-1.5"
+              className="px-4 py-2 bg-white text-black font-mono font-bold text-xs hover:bg-slate-200 transition flex items-center gap-1.5"
             >
-              <span>Checkout ({totalItems})</span>
-              <ShoppingBag className="w-3.5 h-3.5" />
+              <span>CHECKOUT ({totalItems})</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
         )}
+
       </div>
     </div>
   );
