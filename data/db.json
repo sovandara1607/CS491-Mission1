@@ -84,7 +84,7 @@
       "notes": "Customer ordered via Telegram Bot",
       "id": "ORD-98564",
       "createdAt": "2026-11-17T02:34:48.460Z",
-      "updatedAt": "2026-11-17T02:34:48.460Z"
+      "updatedAt": "2026-11-19T03:16:22.827Z"
     },
     {
       "id": "ORD-98214",
@@ -172,6 +172,21 @@
       "step": "IDLE",
       "cart": [],
       "updatedAt": 1794882881960
+    },
+    "telegram:sim_tg_user_99": {
+      "userId": "sim_tg_user_99",
+      "channel": "telegram",
+      "step": "ENTERING_NAME",
+      "cart": [
+        {
+          "productId": "prod-001",
+          "productName": "AeroSound Pro Wireless Headphones",
+          "unitPrice": 129.99,
+          "quantity": 2
+        }
+      ],
+      "updatedAt": 1795058196423,
+      "currentProductId": "prod-001"
     }
   }
 }

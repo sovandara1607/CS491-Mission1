@@ -74,7 +74,7 @@ export default function Navbar() {
 
             {/* Quick Telegram button */}
             <a
-              href="https://t.me/NovaMartShopBot"
+              href={`https://t.me/${(process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || 'nova123456789_bot').replace(/^@/, '')}`}
               target="_blank"
               rel="noreferrer"
               className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-sky-50 text-sky-700 hover:bg-sky-100 transition border border-sky-200"

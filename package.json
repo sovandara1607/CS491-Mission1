@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "bot": "npx tsx scripts/telegramPoller.ts",
     "lint": "next lint"
   },
   "dependencies": {
@@ -22,6 +23,8 @@
     "@types/node": "^26.6.6",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "dotenv": "^18.0.10",
+    "tsx": "^4.23.15",
     "typescript": "^5.6.3"
   }
 }

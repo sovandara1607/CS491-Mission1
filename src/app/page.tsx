@@ -55,7 +55,8 @@ export default function HomePage() {
   };
 
   const getTelegramProductLink = (product: Product) => {
-    return `https://t.me/NovaMartShopBot?start=buy_${product.id}`;
+    const botUser = (process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || 'nova123456789_bot').replace(/^@/, '');
+    return `https://t.me/${botUser}?start=buy_${product.id}`;
   };
 
   return (

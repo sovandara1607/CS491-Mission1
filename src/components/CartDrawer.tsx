@@ -75,7 +75,7 @@ export default function CartDrawer() {
   };
 
   const handleTelegramOrder = () => {
-    const botUser = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || 'NovaMartShopBot';
+    const botUser = (process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || 'nova123456789_bot').replace(/^@/, '');
     const url = `https://t.me/${botUser}?start=catalog`;
     window.open(url, '_blank');
   };
