@@ -7,6 +7,26 @@ export interface TelegramBotReply {
   orderCreated?: Order;
 }
 
+export async function getPublicHttpsUrl(): Promise<string | null> {
+  const envUrl = process.env.NEXT_PUBLIC_APP_URL;
+  if (envUrl && envUrl.startsWith('https://')) {
+    return envUrl.replace(/\/$/, '');
+  }
+
+  try {
+    const res = await fetch('http://127.0.0.1:4040/api/tunnels', { signal: AbortSignal.timeout(800) });
+    const data = await res.json();
+    const httpsTunnel = data.tunnels?.find((t: any) => t.public_url?.startsWith('https://'));
+    if (httpsTunnel) {
+      return httpsTunnel.public_url.replace(/\/$/, '');
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  return null;
+}
+
 export async function processTelegramMessage(
   userId: string,
   userDisplayName: string,
@@ -16,7 +36,8 @@ export async function processTelegramMessage(
   const session = getBotSession(userId, 'telegram');
   const text = (incomingText || '').trim();
   const lowerText = text.toLowerCase();
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const httpsUrl = await getPublicHttpsUrl();
+  const fallbackUrl = httpsUrl || 'http://localhost:3005';
 
   // Check for callback buttons from inline keyboard
   if (callbackData) {
@@ -61,24 +82,32 @@ export async function processTelegramMessage(
   // Handle direct commands
   if (lowerText === '/start' || lowerText === 'start' || lowerText === 'hi' || lowerText === 'hello') {
     resetBotSession(userId, 'telegram');
+
+    const topButtons: { text: string; web_app?: { url: string }; url?: string }[] = [];
+    if (httpsUrl) {
+      topButtons.push({
+        text: '📱 Open Mobile Web App',
+        web_app: { url: `${httpsUrl}/telegram-app` }
+      });
+    } else {
+      topButtons.push({
+        text: '🌐 Visit Web Store',
+        url: fallbackUrl
+      });
+    }
+
     return {
       text: `👋 *Welcome to NovaMart, ${userDisplayName}!* 🛍️\n\n` +
         `Skip downloading another mobile app! You can browse our store and purchase directly inside Telegram with full order tracking.\n\n` +
         `Choose an option below to begin:`,
       buttons: [
-        [
-          { 
-            text: '📱 Open Mobile Web App', 
-            web_app: { url: `${appUrl}/telegram-app` } 
-          }
-        ],
+        topButtons,
         [
           { text: '📦 Browse Product Catalog', callback_data: 'cmd_catalog' },
           { text: '🛒 View Cart', callback_data: 'cmd_cart' }
         ],
         [
-          { text: '🔍 Check Order Status', callback_data: 'cmd_status_prompt' },
-          { text: '🌐 Visit Website', url: appUrl }
+          { text: '🔍 Check Order Status', callback_data: 'cmd_status_prompt' }
         ]
       ]
     };
@@ -226,15 +255,23 @@ export async function processTelegramMessage(
   }
 
   // Fallback
+  const fallbackTopButtons: { text: string; web_app?: { url: string }; url?: string }[] = [];
+  if (httpsUrl) {
+    fallbackTopButtons.push({
+      text: '📱 Open Mobile Web Store',
+      web_app: { url: `${httpsUrl}/telegram-app` }
+    });
+  } else {
+    fallbackTopButtons.push({
+      text: '🌐 Visit Store',
+      url: fallbackUrl
+    });
+  }
+
   return {
-    text: `I didn't understand that command. 🤔\n\n• Type /catalog to browse our products\n• Type /start for main menu\n• Type /status <ORDER_ID> to track an order\n• Or click below to open the mobile web store:`,
+    text: `I didn't understand that command. 🤔\n\n• Type /catalog to browse our products\n• Type /start for main menu\n• Type /status <ORDER_ID> to track an order`,
     buttons: [
-      [
-        { 
-          text: '📱 Open Mobile Web Store', 
-          web_app: { url: `${appUrl}/telegram-app` } 
-        }
-      ],
+      fallbackTopButtons,
       [{ text: '📦 View Catalog', callback_data: 'cmd_catalog' }]
     ]
   };
@@ -254,7 +291,7 @@ function handleCatalogCommand(): TelegramBotReply {
 
     if (p.stock > 0) {
       buttons.push([
-        { text: `🛒 Buy ${p.name.slice(0, 20)}... ($${p.price.toFixed(2)})`, callback_data: `buy_${p.id}` }
+        { text: `🛒 Buy ${p.name.slice(0, 18)}... ($${p.price.toFixed(2)})`, callback_data: `buy_${p.id}` }
       ]);
     }
   });
@@ -352,7 +389,24 @@ export async function sendTelegramApiMessage(chatId: string | number, text: stri
         reply_markup: replyMarkup
       })
     });
-    return await res.json();
+    const result = await res.json();
+    if (!result.ok) {
+      console.error(`[Telegram API Error] to ${chatId}:`, result);
+      // Fallback: If Markdown fails, retry with plain text
+      if (result.description?.includes('can\'t parse entities')) {
+        const retryRes = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: text.replace(/[*_`]/g, ''),
+            reply_markup: replyMarkup
+          })
+        });
+        return await retryRes.json();
+      }
+    }
+    return result;
   } catch (err) {
     console.error('Failed to send Telegram message:', err);
     return { ok: false, error: err };

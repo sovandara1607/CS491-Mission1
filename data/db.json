@@ -8,7 +8,7 @@
       "price": 129.99,
       "category": "Audio",
       "image": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80",
-      "stock": 43
+      "stock": 42
     },
     {
       "id": "prod-002",
@@ -62,6 +62,30 @@
     }
   ],
   "orders": [
+    {
+      "customerName": "Sovandara Rith",
+      "customerPhone": "099944923",
+      "customerAddress": "T70, Siemreap, 12000",
+      "items": [
+        {
+          "productId": "prod-001",
+          "productName": "AeroSound Pro Wireless Headphones",
+          "quantity": 1,
+          "unitPrice": 129.99,
+          "totalPrice": 129.99
+        }
+      ],
+      "totalAmount": 129.99,
+      "currency": "USD",
+      "status": "CONFIRMED",
+      "channel": "telegram",
+      "channelUserId": "894685975",
+      "paymentMethod": "COD",
+      "notes": "Customer ordered via Telegram Bot",
+      "id": "ORD-23358",
+      "createdAt": "2026-11-19T03:22:40.897Z",
+      "updatedAt": "2026-11-19T03:22:40.897Z"
+    },
     {
       "customerName": "John Smith",
       "customerPhone": "+14155557788",
@@ -187,6 +211,13 @@
       ],
       "updatedAt": 1795058196423,
       "currentProductId": "prod-001"
+    },
+    "telegram:894685975": {
+      "userId": "894685975",
+      "channel": "telegram",
+      "step": "IDLE",
+      "cart": [],
+      "updatedAt": 1795058570558
     }
   }
 }

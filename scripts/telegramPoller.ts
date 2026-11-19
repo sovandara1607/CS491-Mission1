@@ -99,8 +99,8 @@ async function startPolling() {
               )
             } : undefined;
 
-            await sendTelegramApiMessage(chatId, reply.text, replyMarkup);
-            console.log(`[Telegram Poller] 📤 Sent reply to ${chatId}`);
+            const sendRes = await sendTelegramApiMessage(chatId, reply.text, replyMarkup);
+            console.log(`[Telegram Poller] 📤 Sent reply to ${chatId}:`, sendRes?.ok ? 'SUCCESS' : sendRes);
           }
         }
       } else {
