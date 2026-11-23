@@ -5,8 +5,8 @@ import Navbar from '@/components/Navbar';
 import CartDrawer from '@/components/CartDrawer';
 
 export const metadata: Metadata = {
-  title: 'NovaMart | Next-Gen Web & Messaging Commerce',
-  description: 'Shop top tech gadgets directly via Web, Telegram Mini App, or WhatsApp without downloading native mobile apps.',
+  title: 'NovaMart | Premium Electronics & Hardware',
+  description: 'Verified audio, mechanical keyboards, wearables, and desktop gear. Order on web, Telegram, or WhatsApp with Cash on Delivery across Cambodia.',
 };
 
 export default function RootLayout({
@@ -27,7 +27,7 @@ export default function RootLayout({
             {children}
           </main>
           
-          {/* KhmerKit Style Footer */}
+          {/* Footer */}
           <footer className="border-t border-[var(--line)] bg-[#08090c] py-12 text-xs font-mono">
             <div className="max-w-[1140px] mx-auto px-4 sm:px-8 space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -41,7 +41,7 @@ export default function RootLayout({
                     <span className="text-sm font-bold text-white font-sans">NovaMart</span>
                   </div>
                   <p className="text-[11px] text-[var(--subtle)] leading-relaxed font-sans">
-                    Zero-app mobile retail infrastructure. Orders route directly from Telegram and WhatsApp into one unified database.
+                    Verified electronics & desktop peripherals. Same-day delivery in Phnom Penh and express delivery to all 25 provinces.
                   </p>
                 </div>
 
@@ -50,36 +50,36 @@ export default function RootLayout({
                   <span className="kk-tag">CHANNELS</span>
                   <ul className="space-y-1.5 text-[11px] text-[var(--muted)]">
                     <li><a href={`https://t.me/${botUsername}`} target="_blank" rel="noreferrer" className="hover:text-white transition">Telegram Bot (@{botUsername}) ↗</a></li>
-                    <li><a href="/telegram-app" className="hover:text-white transition">Telegram Mini App (/tma)</a></li>
-                    <li><a href={`https://wa.me/${waPhone}`} target="_blank" rel="noreferrer" className="hover:text-white transition">WhatsApp Direct (+{waPhone}) ↗</a></li>
-                    <li><a href="/" className="hover:text-white transition">Web Storefront</a></li>
+                    <li><a href="/telegram-app" className="hover:text-white transition">Telegram Mini App</a></li>
+                    <li><a href={`https://wa.me/${waPhone}`} target="_blank" rel="noreferrer" className="hover:text-white transition">WhatsApp (+{waPhone}) ↗</a></li>
+                    <li><a href="/" className="hover:text-white transition">Store Catalog</a></li>
                   </ul>
                 </div>
 
                 {/* Operations */}
                 <div className="space-y-2">
-                  <span className="kk-tag">SYSTEM</span>
+                  <span className="kk-tag">ORDERS & DISPATCH</span>
                   <ul className="space-y-1.5 text-[11px] text-[var(--muted)]">
-                    <li><a href="/admin" className="hover:text-white transition">Admin Orders Dispatch</a></li>
-                    <li><a href="/api/products" className="hover:text-white transition">JSON Catalog Endpoint</a></li>
-                    <li><a href="/api/orders" className="hover:text-white transition">Orders REST API</a></li>
-                    <li><a href="/api/webhook/telegram" className="hover:text-white transition">Telegram Webhook Router</a></li>
+                    <li><a href="/admin" className="hover:text-white transition">Order Management</a></li>
+                    <li><span className="text-[var(--subtle)]">Hours: 8:00 AM – 8:00 PM</span></li>
+                    <li><span className="text-[var(--subtle)]">Phnom Penh & Siem Reap</span></li>
+                    <li><span className="text-[var(--subtle)]">Phone: +855 99 944 923</span></li>
                   </ul>
                 </div>
 
-                {/* Specs */}
+                {/* Service Specs */}
                 <div className="space-y-2">
-                  <span className="kk-tag">ENGINEERING</span>
+                  <span className="kk-tag">CUSTOMER CARE</span>
                   <p className="text-[11px] text-[var(--subtle)] leading-relaxed font-sans">
-                    Built with Next.js, Node.js, Telegram Bot API & WebApp SDK. Eliminates 100% of app store review overhead.
+                    Cash on Delivery (COD) and ABA KHQR accepted. 1-year official hardware warranty with 7-day replacement for defects.
                   </p>
                 </div>
 
               </div>
 
               <div className="pt-6 border-t border-[var(--line)] flex flex-col sm:flex-row items-center justify-between gap-2 text-[10px] text-[var(--subtle)]">
-                <span>© {new Date().getFullYear()} NOVAMART TECHNOLOGIES. ALL RIGHTS RESERVED.</span>
-                <span>STATUS: 100% OPERATIONAL // PHNOM PENH & GLOBAL</span>
+                <span>© {new Date().getFullYear()} NOVAMART CAMBODIA. ALL RIGHTS RESERVED.</span>
+                <span>FREE DELIVERY ON ORDERS OVER $30</span>
               </div>
             </div>
           </footer>

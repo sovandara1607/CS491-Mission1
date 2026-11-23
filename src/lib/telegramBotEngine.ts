@@ -39,7 +39,7 @@ export async function processTelegramMessage(
   const httpsUrl = await getPublicHttpsUrl();
   const fallbackUrl = httpsUrl || 'http://localhost:3005';
 
-  // Check for callback buttons from inline keyboard
+  // Handle callback buttons
   if (callbackData) {
     if (callbackData === 'cmd_catalog') {
       return handleCatalogCommand();
@@ -52,14 +52,14 @@ export async function processTelegramMessage(
         session.currentProductId = prod.id;
         updateBotSession(session);
         return {
-          text: `🛒 *Selected Item:* ${prod.name}\n💰 *Price:* $${prod.price.toFixed(2)}\n\nHow many would you like to purchase? (Please reply with a number, e.g. *1* or *2*)`,
+          text: `Selected: *${prod.name}*\nPrice: *$${prod.price.toFixed(2)}*\n\nHow many units would you like to order?`,
           buttons: [
             [
-              { text: '1 Unit', callback_data: `qty_1` },
-              { text: '2 Units', callback_data: `qty_2` },
-              { text: '3 Units', callback_data: `qty_3` }
+              { text: '1 Unit', callback_data: 'qty_1' },
+              { text: '2 Units', callback_data: 'qty_2' },
+              { text: '3 Units', callback_data: 'qty_3' }
             ],
-            [{ text: '❌ Cancel', callback_data: 'cmd_cancel' }]
+            [{ text: 'Cancel', callback_data: 'cmd_cancel' }]
           ]
         };
       }
@@ -71,7 +71,7 @@ export async function processTelegramMessage(
     if (callbackData === 'cmd_cancel') {
       resetBotSession(userId, 'telegram');
       return {
-        text: '❌ Order cancelled. Type /catalog to browse products again or /start for the main menu.'
+        text: 'Order cancelled. Type /catalog to browse or /start for the menu.'
       };
     }
     if (callbackData === 'cmd_cart') {
@@ -86,28 +86,28 @@ export async function processTelegramMessage(
     const topButtons: { text: string; web_app?: { url: string }; url?: string }[] = [];
     if (httpsUrl) {
       topButtons.push({
-        text: '📱 Open Mobile Web App',
+        text: '🛍️ Open Store (Mini App)',
         web_app: { url: `${httpsUrl}/telegram-app` }
       });
     } else {
       topButtons.push({
-        text: '🌐 Visit Web Store',
+        text: '🌐 Visit Store',
         url: fallbackUrl
       });
     }
 
     return {
-      text: `👋 *Welcome to NovaMart, ${userDisplayName}!* 🛍️\n\n` +
-        `Skip downloading another mobile app! You can browse our store and purchase directly inside Telegram with full order tracking.\n\n` +
-        `Choose an option below to begin:`,
+      text: `Welcome to *NovaMart*, ${userDisplayName}.\n\n` +
+        `Verified electronics and desktop gear with fast delivery across Cambodia (Cash on Delivery).\n\n` +
+        `Choose an option below to start:`,
       buttons: [
         topButtons,
         [
-          { text: '📦 Browse Product Catalog', callback_data: 'cmd_catalog' },
+          { text: '📦 Browse Catalog', callback_data: 'cmd_catalog' },
           { text: '🛒 View Cart', callback_data: 'cmd_cart' }
         ],
         [
-          { text: '🔍 Check Order Status', callback_data: 'cmd_status_prompt' }
+          { text: '🔍 Track Order', callback_data: 'cmd_status_prompt' }
         ]
       ]
     };
@@ -124,24 +124,23 @@ export async function processTelegramMessage(
       const order = getOrderById(orderId);
       if (order) {
         return {
-          text: `📦 *Order Tracking Details*\n\n` +
-            `• *Order ID:* \`${order.id}\`\n` +
-            `• *Customer:* ${order.customerName}\n` +
-            `• *Status:* ${getStatusEmoji(order.status)} *${order.status}*\n` +
-            `• *Total:* $${order.totalAmount.toFixed(2)} (${order.paymentMethod})\n` +
-            `• *Items:* ${order.items.map(i => `${i.productName} (x${i.quantity})`).join(', ')}\n` +
-            `• *Delivery Address:* ${order.customerAddress}\n` +
-            `• *Placed On:* ${new Date(order.createdAt).toLocaleString()}\n\n` +
-            `Need assistance? Reply anytime.`
+          text: `📦 *Order #${order.id}*\n\n` +
+            `• Status: *${order.status}*\n` +
+            `• Recipient: ${order.customerName}\n` +
+            `• Phone: ${order.customerPhone}\n` +
+            `• Address: ${order.customerAddress}\n` +
+            `• Items: ${order.items.map(i => `${i.productName} (x${i.quantity})`).join(', ')}\n` +
+            `• Total: *$${order.totalAmount.toFixed(2)}* (${order.paymentMethod})\n` +
+            `• Date: ${new Date(order.createdAt).toLocaleDateString()}`
         };
       } else {
         return {
-          text: `⚠️ Order \`${orderId}\` could not be found. Please verify your Order ID (e.g. \`ORD-98214\`).`
+          text: `Order \`${orderId}\` was not found. Please check your order ID (e.g. \`ORD-23358\`).`
         };
       }
     } else {
       return {
-        text: `🔍 *Check Order Status*\n\nPlease reply with your Order ID, for example:\n\`/status ORD-98214\``
+        text: `To track an order, send:\n\`/status ORD-XXXXX\``
       };
     }
   }
@@ -149,16 +148,16 @@ export async function processTelegramMessage(
   if (lowerText === '/cancel' || lowerText === 'cancel') {
     resetBotSession(userId, 'telegram');
     return {
-      text: `🔄 Session cleared. Type /start or /catalog whenever you are ready!`
+      text: 'Session reset. Send /catalog to view items.'
     };
   }
 
-  // Handle multi-step order flow
+  // Multi-step conversational ordering
   if (session.step === 'ENTERING_QUANTITY') {
     const qty = parseInt(text, 10);
     if (isNaN(qty) || qty <= 0) {
       return {
-        text: `⚠️ Please enter a valid quantity number (e.g. 1, 2, 5):`
+        text: 'Please enter a valid quantity (e.g. 1, 2, 3):'
       };
     }
     return handleQuantityInput(session, qty);
@@ -169,7 +168,7 @@ export async function processTelegramMessage(
     session.step = 'ENTERING_PHONE';
     updateBotSession(session);
     return {
-      text: `Great, ${text}! 📱 What is your *mobile phone number* for delivery contact?`
+      text: `Thanks, ${text}. Please provide your *phone number* for delivery confirmation:`
     };
   }
 
@@ -178,7 +177,7 @@ export async function processTelegramMessage(
     session.step = 'ENTERING_ADDRESS';
     updateBotSession(session);
     return {
-      text: `📍 What is your *delivery address*? (Street, city, postal code)`
+      text: 'Please provide your *delivery address* (e.g. Street, Sangkat, Khan / Province):'
     };
   }
 
@@ -190,18 +189,18 @@ export async function processTelegramMessage(
     const total = session.cart.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
 
     return {
-      text: `📋 *Order Summary & Confirmation*\n\n` +
-        `👤 *Customer:* ${session.customerName}\n` +
-        `📞 *Phone:* ${session.customerPhone}\n` +
-        `📍 *Address:* ${session.customerAddress}\n\n` +
-        `*Items Ordered:*\n` +
-        session.cart.map(i => `• ${i.productName} x${i.quantity} — $${(i.unitPrice * i.quantity).toFixed(2)}`).join('\n') +
-        `\n\n💰 *Total Amount:* $${total.toFixed(2)}\n` +
-        `💵 *Payment:* Cash on Delivery (COD)\n\n` +
-        `Reply *CONFIRM* or *YES* to place your order!`,
+      text: `📋 *Order Review*\n\n` +
+        `• Name: ${session.customerName}\n` +
+        `• Phone: ${session.customerPhone}\n` +
+        `• Address: ${session.customerAddress}\n\n` +
+        `*Items:*\n` +
+        session.cart.map(i => `• ${i.productName} (x${i.quantity}) — $${(i.unitPrice * i.quantity).toFixed(2)}`).join('\n') +
+        `\n\nTotal to pay: *$${total.toFixed(2)}*\n` +
+        `Payment: Cash on Delivery (COD)\n\n` +
+        `Reply *CONFIRM* to place this order:`,
       buttons: [
-        [{ text: '✅ Confirm & Place Order', callback_data: 'confirm_yes' }],
-        [{ text: '❌ Cancel Order', callback_data: 'cmd_cancel' }]
+        [{ text: '✅ Confirm Order', callback_data: 'confirm_yes' }],
+        [{ text: '❌ Cancel', callback_data: 'cmd_cancel' }]
       ]
     };
   }
@@ -210,13 +209,13 @@ export async function processTelegramMessage(
     if (!session.cart || session.cart.length === 0) {
       resetBotSession(userId, 'telegram');
       return {
-        text: `Your cart is empty. Please type /catalog to choose an item.`
+        text: 'Your cart is empty. Send /catalog to choose an item.'
       };
     }
 
     const total = session.cart.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
     const order = createOrder({
-      customerName: session.customerName || userDisplayName || 'Telegram Customer',
+      customerName: session.customerName || userDisplayName || 'Customer',
       customerPhone: session.customerPhone || 'Not provided',
       customerAddress: session.customerAddress || 'Direct via Telegram',
       items: session.cart.map(i => ({
@@ -238,16 +237,16 @@ export async function processTelegramMessage(
     resetBotSession(userId, 'telegram');
 
     return {
-      text: `🎉 *ORDER PLACED SUCCESSFULLY!* 🎉\n\n` +
-        `Thank you for shopping with us! Your order has been registered in our store database.\n\n` +
-        `• *Order ID:* \`${order.id}\`\n` +
-        `• *Total:* $${order.totalAmount.toFixed(2)} (Cash on Delivery)\n` +
-        `• *Estimated Delivery:* 1-3 Business Days\n\n` +
-        `You can check your order status anytime by sending:\n\`/status ${order.id}\``,
+      text: `✅ *Order Placed Successfully*\n\n` +
+        `• Order ID: \`${order.id}\`\n` +
+        `• Total: *$${order.totalAmount.toFixed(2)}* (Cash on Delivery)\n` +
+        `• Estimated delivery: 1–2 business days\n\n` +
+        `Our dispatch team will contact your phone before arrival.\n` +
+        `Track anytime: \`/status ${order.id}\``,
       buttons: [
         [
-          { text: '📦 Track My Order', callback_data: `status_${order.id}` },
-          { text: '🛍️ Continue Shopping', callback_data: 'cmd_catalog' }
+          { text: '📦 Track Status', callback_data: `status_${order.id}` },
+          { text: '🛍️ Shop More', callback_data: 'cmd_catalog' }
         ]
       ],
       orderCreated: order
@@ -258,7 +257,7 @@ export async function processTelegramMessage(
   const fallbackTopButtons: { text: string; web_app?: { url: string }; url?: string }[] = [];
   if (httpsUrl) {
     fallbackTopButtons.push({
-      text: '📱 Open Mobile Web Store',
+      text: '🛍️ Open Store (Mini App)',
       web_app: { url: `${httpsUrl}/telegram-app` }
     });
   } else {
@@ -269,7 +268,7 @@ export async function processTelegramMessage(
   }
 
   return {
-    text: `I didn't understand that command. 🤔\n\n• Type /catalog to browse our products\n• Type /start for main menu\n• Type /status <ORDER_ID> to track an order`,
+    text: `Send /catalog to view products or /status <ID> to track your parcel.`,
     buttons: [
       fallbackTopButtons,
       [{ text: '📦 View Catalog', callback_data: 'cmd_catalog' }]
@@ -279,26 +278,25 @@ export async function processTelegramMessage(
 
 function handleCatalogCommand(): TelegramBotReply {
   const products = getProducts();
-  let message = `📦 *NovaMart Product Catalog*\n\n`;
-  message += `Select a product below to purchase immediately:\n\n`;
+  let message = `📦 *NovaMart Catalog*\n\n`;
 
   const buttons: { text: string; callback_data: string }[][] = [];
 
   products.forEach((p, index) => {
     message += `*${index + 1}. ${p.name}*\n`;
-    message += `💵 Price: *$${p.price.toFixed(2)}* | Stock: ${p.stock > 0 ? `${p.stock} in stock` : 'Out of stock'}\n`;
-    message += `📝 ${p.description}\n\n`;
+    message += `Price: *$${p.price.toFixed(2)}* | Stock: ${p.stock > 0 ? `${p.stock} units` : 'Out of stock'}\n`;
+    message += `${p.description}\n\n`;
 
     if (p.stock > 0) {
       buttons.push([
-        { text: `🛒 Buy ${p.name.slice(0, 18)}... ($${p.price.toFixed(2)})`, callback_data: `buy_${p.id}` }
+        { text: `Buy ${p.name.slice(0, 18)}... ($${p.price.toFixed(2)})`, callback_data: `buy_${p.id}` }
       ]);
     }
   });
 
   buttons.push([
     { text: '🛒 View Cart', callback_data: 'cmd_cart' },
-    { text: '❌ Cancel', callback_data: 'cmd_cancel' }
+    { text: 'Cancel', callback_data: 'cmd_cancel' }
   ]);
 
   return {
@@ -311,7 +309,7 @@ function handleQuantityInput(session: BotSession, qty: number): TelegramBotReply
   const prod = getProductById(session.currentProductId || '');
   if (!prod) {
     return {
-      text: `⚠️ Product not found. Please browse /catalog.`
+      text: 'Item not found. Send /catalog to choose again.'
     };
   }
 
@@ -327,54 +325,50 @@ function handleQuantityInput(session: BotSession, qty: number): TelegramBotReply
   updateBotSession(session);
 
   return {
-    text: `✅ Added *${qty}x ${prod.name}* to your order (Total: *$${(prod.price * qty).toFixed(2)}*).\n\n` +
-      `👤 Please reply with your *Full Name* for the delivery order:`
+    text: `Added *${qty}x ${prod.name}* ($${(prod.price * qty).toFixed(2)}).\n\nPlease provide your *full name* for the shipping label:`
   };
 }
 
 function handleCartView(session: BotSession): TelegramBotReply {
   if (!session.cart || session.cart.length === 0) {
     return {
-      text: `🛒 *Your cart is currently empty.*\n\nExplore our catalog with /catalog to add items!`,
+      text: 'Your cart is empty. Send /catalog to browse products.',
       buttons: [[{ text: '📦 Browse Catalog', callback_data: 'cmd_catalog' }]]
     };
   }
 
-  let text = `🛒 *Your Current Cart:*\n\n`;
+  let text = `🛒 *Your Cart:*\n\n`;
   let total = 0;
   session.cart.forEach(item => {
     const sub = item.unitPrice * item.quantity;
     total += sub;
-    text += `• *${item.productName}* x${item.quantity} = $${sub.toFixed(2)}\n`;
+    text += `• ${item.productName} (x${item.quantity}) — $${sub.toFixed(2)}\n`;
   });
-  text += `\n💰 *Total:* $${total.toFixed(2)}\n\nWould you like to proceed with checkout?`;
+  text += `\nTotal: *$${total.toFixed(2)}*`;
 
   return {
     text,
     buttons: [
-      [{ text: '🚀 Proceed to Checkout', callback_data: 'confirm_yes' }],
-      [{ text: '🗑️ Clear Cart', callback_data: 'cmd_cancel' }]
+      [{ text: 'Proceed to Checkout', callback_data: 'confirm_yes' }],
+      [{ text: 'Clear Cart', callback_data: 'cmd_cancel' }]
     ]
   };
 }
 
 function getStatusEmoji(status: string): string {
   switch (status) {
-    case 'PENDING': return '⏳';
     case 'CONFIRMED': return '✅';
     case 'PROCESSING': return '⚙️';
     case 'SHIPPED': return '🚚';
-    case 'DELIVERED': return '🎁';
+    case 'DELIVERED': return '📦';
     case 'CANCELLED': return '❌';
-    default: return '📦';
+    default: return '⏳';
   }
 }
 
-// Real outbound telegram message sender
 export async function sendTelegramApiMessage(chatId: string | number, text: string, replyMarkup?: any) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   if (!token) {
-    console.log('[Telegram Bot] Live token not configured in .env, simulation mode.');
     return { ok: true, simulated: true };
   }
 

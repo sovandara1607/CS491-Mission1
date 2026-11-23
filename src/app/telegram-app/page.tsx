@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Product } from '@/lib/types';
-import { ShoppingBag, ArrowLeft, Send, Check, Minus, Plus, ArrowRight, ShieldCheck } from 'lucide-react';
+import { ShoppingBag, ArrowLeft, Send, Check, Minus, Plus, ArrowRight, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function TelegramMiniApp() {
@@ -71,7 +71,7 @@ export default function TelegramMiniApp() {
   const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !address) {
-      alert('Please fill in name and delivery address');
+      alert('Please fill in your name and delivery address');
       return;
     }
 
@@ -96,7 +96,7 @@ export default function TelegramMiniApp() {
           totalAmount,
           channel: 'telegram',
           paymentMethod: 'COD',
-          notes: `Placed via Telegram Mini App (TMA). User ID: ${tgUser?.id || 'Telegram User'}`
+          notes: `Placed via Telegram Mini App. User: ${tgUser?.username || tgUser?.first_name || 'Browser Preview'}`
         })
       });
 
@@ -131,7 +131,7 @@ export default function TelegramMiniApp() {
       {/* Mini App Shell Container */}
       <div className="w-full max-w-md bg-[#12141b] border border-[var(--line)] overflow-hidden flex flex-col min-h-[640px] shadow-2xl">
         
-        {/* KhmerKit Style Mini App Header */}
+        {/* Header */}
         <div className="bg-[#0c0d12] border-b border-[var(--line)] px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             {step !== 'catalog' ? (
@@ -148,11 +148,11 @@ export default function TelegramMiniApp() {
             )}
             <div>
               <h2 className="text-xs font-bold font-mono tracking-tight text-white flex items-center gap-1.5">
-                <span>NOVAMART // TMA</span>
+                <span>NovaMart Store</span>
               </h2>
               <p className="text-[10px] font-mono text-[var(--subtle)] flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-green)] animate-pulse"></span>
-                <span>ONLINE / TELEGRAM</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-green)]"></span>
+                <span>Phnom Penh & Provincial Delivery</span>
               </p>
             </div>
           </div>
@@ -170,10 +170,10 @@ export default function TelegramMiniApp() {
           </div>
         </div>
 
-        {/* Telegram User Metadata Strip */}
+        {/* User Status Bar */}
         <div className="bg-[var(--card-bg-subtle)] border-b border-[var(--line)] px-4 py-1.5 text-[10px] font-mono text-[var(--muted)] flex items-center justify-between">
-          <span>{tgUser ? `@${tgUser.username || tgUser.first_name}` : 'AUTHENTICATED // TMA_SESSION'}</span>
-          <span className="text-[var(--accent-purple)]">v1.0-STABLE</span>
+          <span>{tgUser ? `Logged in as @${tgUser.username || tgUser.first_name}` : 'Telegram In-App Checkout'}</span>
+          <span className="text-[var(--accent-green)] font-semibold">Cash on Delivery</span>
         </div>
 
         {/* Dynamic Body Content */}
@@ -182,16 +182,6 @@ export default function TelegramMiniApp() {
           {step === 'catalog' && (
             <div className="space-y-4">
               
-              {/* Top Banner */}
-              <div className="p-3 border border-[var(--line)] bg-[var(--card-bg-subtle)] space-y-1">
-                <div className="flex items-center gap-1.5 text-[10px] font-mono text-[var(--accent-green)]">
-                  <span>● IN-APP STOREFRONT</span>
-                </div>
-                <p className="text-xs text-[var(--muted)] leading-relaxed">
-                  Browse products and purchase with instant cash on delivery (COD) without leaving Telegram.
-                </p>
-              </div>
-
               {/* Products List */}
               {loading ? (
                 <div className="space-y-2">
@@ -245,7 +235,7 @@ export default function TelegramMiniApp() {
                               onClick={() => addToCart(p)}
                               className="px-2.5 py-1.5 bg-white text-black text-[11px] font-mono font-bold hover:bg-slate-200 transition"
                             >
-                              + BUY
+                              + Buy
                             </button>
                           )}
                         </div>
@@ -260,8 +250,8 @@ export default function TelegramMiniApp() {
           {step === 'checkout' && (
             <form onSubmit={handleSubmitOrder} className="space-y-4">
               <div className="flex items-center justify-between pb-2 border-b border-[var(--line)]">
-                <span className="text-xs font-mono font-bold text-white">ORDER SUMMARY</span>
-                <span className="text-[10px] font-mono text-[var(--subtle)]">{cart.length} LINE_ITEMS</span>
+                <span className="text-xs font-mono font-bold text-white">Order Items</span>
+                <span className="text-[10px] font-mono text-[var(--subtle)]">{cart.length} items</span>
               </div>
 
               {/* Items Table */}
@@ -277,7 +267,7 @@ export default function TelegramMiniApp() {
                   </div>
                 ))}
                 <div className="p-3 bg-[var(--card-bg-subtle)] flex justify-between items-center font-bold font-mono">
-                  <span>TOTAL AMOUNT:</span>
+                  <span>Total Amount:</span>
                   <span className="text-base text-white">${totalAmount.toFixed(2)}</span>
                 </div>
               </div>
@@ -285,8 +275,8 @@ export default function TelegramMiniApp() {
               {/* Delivery Details Form */}
               <div className="space-y-3 pt-2">
                 <div>
-                  <label className="block text-[10px] font-mono text-[var(--subtle)] mb-1">
-                    RECIPIENT_NAME
+                  <label className="block text-[10px] font-mono text-[var(--subtle)] uppercase mb-1">
+                    Your Name
                   </label>
                   <input
                     type="text"
@@ -299,36 +289,36 @@ export default function TelegramMiniApp() {
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-mono text-[var(--subtle)] mb-1">
-                    CONTACT_PHONE
+                  <label className="block text-[10px] font-mono text-[var(--subtle)] uppercase mb-1">
+                    Phone Number
                   </label>
                   <input
                     type="tel"
                     required
                     value={phone}
                     onChange={e => setPhone(e.target.value)}
-                    placeholder="099 944 923"
+                    placeholder="e.g. 099 944 923"
                     className="w-full px-3 py-2 text-xs bg-[var(--input-bg)] border border-[var(--line)] text-white focus:outline-none focus:border-[var(--line-strong)] font-mono"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-mono text-[var(--subtle)] mb-1">
-                    DELIVERY_ADDRESS
+                  <label className="block text-[10px] font-mono text-[var(--subtle)] uppercase mb-1">
+                    Delivery Address
                   </label>
                   <textarea
                     required
                     rows={2}
                     value={address}
                     onChange={e => setAddress(e.target.value)}
-                    placeholder="Street, City, Province"
+                    placeholder="Street, Sangkat, Khan / Province"
                     className="w-full px-3 py-2 text-xs bg-[var(--input-bg)] border border-[var(--line)] text-white focus:outline-none focus:border-[var(--line-strong)] font-mono"
                   />
                 </div>
 
                 <div className="p-2.5 border border-[var(--line)] bg-[var(--card-bg-subtle)] text-[11px] font-mono text-[var(--muted)] flex items-center gap-2">
-                  <span className="text-[var(--accent-amber)] font-bold">[!]</span>
-                  <span>PAYMENT: Cash on Delivery (COD)</span>
+                  <ShieldCheck className="w-3.5 h-3.5 text-[var(--accent-green)]" />
+                  <span>Payment: Cash on Delivery (COD) or ABA KHQR</span>
                 </div>
               </div>
 
@@ -337,7 +327,7 @@ export default function TelegramMiniApp() {
                 disabled={submitting}
                 className="w-full py-3 bg-white text-black font-bold font-mono text-xs hover:bg-slate-200 transition flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                {submitting ? 'DISPATCHING...' : `CONFIRM ORDER ($${totalAmount.toFixed(2)}) →`}
+                {submitting ? 'Placing Order...' : `Confirm Order ($${totalAmount.toFixed(2)}) →`}
               </button>
             </form>
           )}
@@ -348,18 +338,22 @@ export default function TelegramMiniApp() {
                 ✓
               </div>
               <div>
-                <h3 className="text-base font-bold font-mono text-white">ORDER DISPATCHED</h3>
+                <h3 className="text-base font-bold font-mono text-white">Order Received</h3>
                 <p className="text-xs font-mono text-[var(--accent-green)] mt-1">
-                  ID: #{createdOrder.id}
+                  Order ID: #{createdOrder.id}
                 </p>
               </div>
 
               <div className="p-3 border border-[var(--line)] bg-[var(--input-bg)] text-left text-xs font-mono space-y-1.5">
-                <p className="flex justify-between"><span className="text-[var(--subtle)]">CUSTOMER:</span> <span className="text-white">{createdOrder.customerName}</span></p>
-                <p className="flex justify-between"><span className="text-[var(--subtle)]">PHONE:</span> <span className="text-white">{createdOrder.customerPhone}</span></p>
-                <p className="flex justify-between"><span className="text-[var(--subtle)]">TOTAL:</span> <span className="font-bold text-white">${createdOrder.totalAmount.toFixed(2)}</span></p>
-                <p className="flex justify-between"><span className="text-[var(--subtle)]">PAYMENT:</span> <span>CASH_ON_DELIVERY</span></p>
+                <p className="flex justify-between"><span className="text-[var(--subtle)]">Customer:</span> <span className="text-white">{createdOrder.customerName}</span></p>
+                <p className="flex justify-between"><span className="text-[var(--subtle)]">Phone:</span> <span className="text-white">{createdOrder.customerPhone}</span></p>
+                <p className="flex justify-between"><span className="text-[var(--subtle)]">Total:</span> <span className="font-bold text-white">${createdOrder.totalAmount.toFixed(2)}</span></p>
+                <p className="flex justify-between"><span className="text-[var(--subtle)]">Payment:</span> <span>Cash on Delivery</span></p>
               </div>
+
+              <p className="text-xs text-[var(--muted)] leading-relaxed">
+                Our dispatch team will contact your phone before arriving with your parcel.
+              </p>
 
               <button
                 onClick={() => {
@@ -368,7 +362,7 @@ export default function TelegramMiniApp() {
                 }}
                 className="w-full py-2.5 border border-[var(--line)] text-white hover:bg-white hover:text-black font-mono text-xs font-bold transition"
               >
-                RETURN TO CATALOG
+                Return to Shop
               </button>
             </div>
           )}
@@ -379,14 +373,14 @@ export default function TelegramMiniApp() {
         {step === 'catalog' && cart.length > 0 && (
           <div className="p-3 bg-[#0c0d12] border-t border-[var(--line)] flex items-center justify-between">
             <div>
-              <span className="text-[9px] font-mono text-[var(--subtle)] block">TOTAL_ESTIMATE</span>
+              <span className="text-[9px] font-mono text-[var(--subtle)] block">Cart Total</span>
               <span className="text-sm font-mono font-bold text-white">${totalAmount.toFixed(2)}</span>
             </div>
             <button
               onClick={() => setStep('checkout')}
               className="px-4 py-2 bg-white text-black font-mono font-bold text-xs hover:bg-slate-200 transition flex items-center gap-1.5"
             >
-              <span>CHECKOUT ({totalItems})</span>
+              <span>Checkout ({totalItems})</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>

@@ -1,5 +1,5 @@
 import { getProducts, getProductById, createOrder, getOrderById, getBotSession, updateBotSession, resetBotSession } from './db';
-import { BotSession, Order, OrderItem } from './types';
+import { BotSession, Order } from './types';
 
 export interface WhatsAppBotReply {
   text: string;
@@ -20,26 +20,26 @@ export async function processWhatsAppMessage(
   if (lower === 'hi' || lower === 'hello' || lower === 'menu' || lower === 'start' || lower === 'hey') {
     resetBotSession(fromPhoneNumber, 'whatsapp');
     return {
-      text: `👋 *Welcome to NovaMart WhatsApp Store!* 🛍️\n\n` +
-        `Shop top tech gadgets directly in WhatsApp without downloading any extra app.\n\n` +
-        `*Quick Commands:*\n` +
-        `• Send *CATALOG* to see all items\n` +
+      text: `Hello, welcome to *NovaMart*.\n\n` +
+        `Direct ordering & support desk.\n\n` +
+        `*Commands:*\n` +
+        `• Send *CATALOG* to view products\n` +
         `• Send *BUY <Item#>* (e.g. *BUY 1*) to order an item\n` +
-        `• Send *STATUS <Order#>* to track your order\n` +
-        `• Send *HELP* for human customer care`
+        `• Send *STATUS <Order#>* to track your delivery\n` +
+        `• Send *HELP* for assistance`
     };
   }
 
   // Catalog Command
   if (lower === 'catalog' || lower === 'products' || lower === 'shop') {
-    let msg = `📦 *NovaMart Official Catalog*\n\n`;
+    let msg = `📦 *NovaMart Catalog*\n\n`;
     products.forEach((p, idx) => {
       msg += `*${idx + 1}. ${p.name}*\n`;
-      msg += `💵 Price: *$${p.price.toFixed(2)}* (Code: \`${p.sku}\`)\n`;
-      msg += `📝 ${p.description}\n`;
+      msg += `Price: *$${p.price.toFixed(2)}* (Code: \`${p.sku}\`)\n`;
+      msg += `${p.description}\n`;
       msg += `👉 Reply *BUY ${idx + 1}* to order\n\n`;
     });
-    msg += `Need help? Reply *MENU* anytime.`;
+    msg += `Reply with *BUY <Item#>* to order or *MENU* for options.`;
     return { text: msg };
   }
 
@@ -51,23 +51,22 @@ export async function processWhatsAppMessage(
       const order = getOrderById(orderId);
       if (order) {
         return {
-          text: `📦 *Order Tracking #${order.id}*\n\n` +
-            `• *Customer:* ${order.customerName}\n` +
-            `• *Current Status:* *${order.status}*\n` +
-            `• *Total:* $${order.totalAmount.toFixed(2)} (${order.paymentMethod})\n` +
-            `• *Items:* ${order.items.map(i => `${i.productName} (x${i.quantity})`).join(', ')}\n` +
-            `• *Delivery Address:* ${order.customerAddress}\n` +
-            `• *Date Placed:* ${new Date(order.createdAt).toLocaleDateString()}\n\n` +
-            `Thank you for trusting NovaMart!`
+          text: `📦 *Order #${order.id}*\n\n` +
+            `• Status: *${order.status}*\n` +
+            `• Customer: ${order.customerName}\n` +
+            `• Total: *$${order.totalAmount.toFixed(2)}* (${order.paymentMethod})\n` +
+            `• Items: ${order.items.map(i => `${i.productName} (x${i.quantity})`).join(', ')}\n` +
+            `• Delivery to: ${order.customerAddress}\n` +
+            `• Placed on: ${new Date(order.createdAt).toLocaleDateString()}`
         };
       } else {
         return {
-          text: `⚠️ Could not find order *${orderId}*. Please verify your order number (e.g. \`STATUS ORD-98215\`).`
+          text: `Order \`${orderId}\` could not be found. Please check your order ID (e.g. \`STATUS ORD-23358\`).`
         };
       }
     } else {
       return {
-        text: `🔍 Send *STATUS <Order#>* (e.g. *STATUS ORD-98215*) to track your package.`
+        text: `To track your package, send:\n*STATUS ORD-XXXXX*`
       };
     }
   }
@@ -79,7 +78,6 @@ export async function processWhatsAppMessage(
       const target = parts[1].trim();
       let product = null;
 
-      // Check numeric index
       const numIdx = parseInt(target, 10);
       if (!isNaN(numIdx) && numIdx >= 1 && numIdx <= products.length) {
         product = products[numIdx - 1];
@@ -90,14 +88,14 @@ export async function processWhatsAppMessage(
       if (product) {
         session.step = 'ENTERING_QUANTITY';
         session.currentProductId = product.id;
-        session.customerName = customerName || 'Valued Customer';
+        session.customerName = customerName || 'Customer';
         session.customerPhone = fromPhoneNumber;
         updateBotSession(session);
 
         return {
-          text: `🛒 *Selected Item:* ${product.name}\n` +
-            `💰 *Unit Price:* $${product.price.toFixed(2)}\n\n` +
-            `How many units would you like to purchase? Please reply with a number (e.g. *1*, *2*, or *3*):`
+          text: `Selected item: *${product.name}*\n` +
+            `Price: *$${product.price.toFixed(2)}*\n\n` +
+            `How many units would you like to purchase? (Reply with a number, e.g. 1 or 2):`
         };
       }
     }
@@ -108,7 +106,7 @@ export async function processWhatsAppMessage(
     const qty = parseInt(text, 10);
     if (isNaN(qty) || qty <= 0) {
       return {
-        text: `⚠️ Please send a valid quantity number (e.g. 1, 2, 5):`
+        text: `Please enter a valid quantity (e.g. 1, 2, 3):`
       };
     }
 
@@ -131,9 +129,8 @@ export async function processWhatsAppMessage(
     updateBotSession(session);
 
     return {
-      text: `✅ Added *${qty}x ${product.name}* to order.\n` +
-        `Subtotal: *$${(product.price * qty).toFixed(2)}*\n\n` +
-        `Please reply with your *Full Name* for the shipping label:`
+      text: `Added *${qty}x ${product.name}* ($${(product.price * qty).toFixed(2)}).\n\n` +
+        `Please reply with your *full name* for delivery:`
     };
   }
 
@@ -143,7 +140,7 @@ export async function processWhatsAppMessage(
     updateBotSession(session);
 
     return {
-      text: `Thanks, *${text}*!\n\n📍 Now please reply with your *complete Delivery Address* (Street, City, Postal Code):`
+      text: `Thanks, *${text}*.\n\nPlease reply with your *complete delivery address*:`
     };
   }
 
@@ -155,17 +152,17 @@ export async function processWhatsAppMessage(
     const total = session.cart.reduce((acc, i) => acc + (i.unitPrice * i.quantity), 0);
 
     return {
-      text: `🧾 *NovaMart - Order Review*\n` +
+      text: `🧾 *NovaMart - Order Summary*\n` +
         `━━━━━━━━━━━━━━━━━━━\n` +
-        `👤 *Customer:* ${session.customerName}\n` +
-        `📱 *WhatsApp:* ${fromPhoneNumber}\n` +
-        `📍 *Address:* ${session.customerAddress}\n\n` +
+        `Name: ${session.customerName}\n` +
+        `Phone: ${fromPhoneNumber}\n` +
+        `Address: ${session.customerAddress}\n\n` +
         `*Items:*\n` +
-        session.cart.map(i => `• ${i.productName} (x${i.quantity}) - $${(i.unitPrice * i.quantity).toFixed(2)}`).join('\n') +
+        session.cart.map(i => `• ${i.productName} (x${i.quantity}) — $${(i.unitPrice * i.quantity).toFixed(2)}`).join('\n') +
         `\n━━━━━━━━━━━━━━━━━━━\n` +
-        `💵 *Total to Pay:* *$${total.toFixed(2)}*\n` +
-        `🚚 *Payment Method:* Cash on Delivery (COD)\n\n` +
-        `Reply *CONFIRM* to place your order or *CANCEL* to discard.`
+        `Total: *$${total.toFixed(2)}*\n` +
+        `Payment: Cash on Delivery (COD)\n\n` +
+        `Reply *CONFIRM* to place your order or *CANCEL* to stop.`
     };
   }
 
@@ -196,44 +193,38 @@ export async function processWhatsAppMessage(
       resetBotSession(fromPhoneNumber, 'whatsapp');
 
       return {
-        text: `🎉 *ORDER PLACED SUCCESSFULLY!* 🎉\n\n` +
+        text: `✅ *Order Confirmed*\n\n` +
           `Order Reference: *#${order.id}*\n` +
           `Total: *$${order.totalAmount.toFixed(2)}*\n` +
-          `Payment: *Cash on Delivery (COD)*\n\n` +
-          `Our fulfillment warehouse is preparing your parcel. You will receive real-time delivery notifications here.\n\n` +
-          `Reply *STATUS ${order.id}* anytime to track shipment!`,
+          `Payment: Cash on Delivery (COD)\n\n` +
+          `Our dispatch team will prepare your parcel and contact you before arrival.\n\n` +
+          `Send *STATUS ${order.id}* anytime to track shipment.`,
         orderCreated: order
       };
     } else if (lower === 'cancel') {
       resetBotSession(fromPhoneNumber, 'whatsapp');
       return {
-        text: `❌ Order cancelled. Send *CATALOG* to browse items again.`
+        text: `Order cancelled. Send *CATALOG* to view products again.`
       };
     }
   }
 
   if (lower === 'help' || lower === 'support') {
     return {
-      text: `🤝 *NovaMart Support Team*\n\n` +
-        `Our support agents are available Mon-Sat, 8am-8pm.\n` +
-        `For immediate automated ordering, reply:\n` +
-        `• *CATALOG* to see products\n` +
-        `• *STATUS <Order#>* to track order\n` +
-        `• Call us at: +1 (800) 555-NOVA`
+      text: `📞 *NovaMart Support*\n\n` +
+        `Direct phone / Telegram: +855 99 944 923\n` +
+        `Hours: Mon–Sun, 8:00 AM – 8:00 PM\n\n` +
+        `• Send *CATALOG* to order products\n` +
+        `• Send *STATUS <OrderID>* to track your parcel`
     };
   }
 
-  // Default fallback
+  // Fallback
   return {
-    text: `Hi! 👋 I couldn't understand that command.\n\n` +
-      `Send *CATALOG* to browse products or *MENU* to see all options.`
+    text: `Send *CATALOG* to browse products or *MENU* to view all options.`
   };
 }
 
-/**
- * Generate a prefilled WhatsApp Click-to-Chat deep link
- * Allows website visitors to click one button and send their cart to WhatsApp
- */
 export function generateWhatsAppOrderLink(
   businessPhoneNumber: string,
   items: { productName: string; quantity: number; unitPrice: number }[],
@@ -241,31 +232,26 @@ export function generateWhatsAppOrderLink(
   customerName?: string
 ): string {
   const cleanPhone = businessPhoneNumber.replace(/[^0-9]/g, '');
-  let message = `Hello NovaMart! 🛍️\nI would like to order from your website:\n\n`;
+  let message = `Hello NovaMart! 🛍️\nI would like to order:\n\n`;
 
   items.forEach(item => {
-    message += `• ${item.productName} (x${item.quantity}) - $${(item.unitPrice * item.quantity).toFixed(2)}\n`;
+    message += `• ${item.productName} (x${item.quantity}) — $${(item.unitPrice * item.quantity).toFixed(2)}\n`;
   });
 
-  message += `\n💰 Total: $${totalAmount.toFixed(2)}\n`;
+  message += `\nTotal: $${totalAmount.toFixed(2)}\n`;
   if (customerName) {
-    message += `👤 Customer: ${customerName}\n`;
+    message += `Name: ${customerName}\n`;
   }
-  message += `Please confirm availability and delivery details. Thank you!`;
+  message += `Please confirm availability and delivery. Thank you!`;
 
-  const encoded = encodeURIComponent(message);
-  return `https://wa.me/${cleanPhone}?text=${encoded}`;
+  return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
 }
 
-/**
- * Outbound WhatsApp Cloud API Sender
- */
 export async function sendWhatsAppMessage(toPhoneNumber: string, text: string) {
   const token = process.env.WHATSAPP_ACCESS_TOKEN;
   const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
 
   if (!token || !phoneId) {
-    console.log('[WhatsApp API] Live token not configured in .env, simulation mode.');
     return { ok: true, simulated: true };
   }
 

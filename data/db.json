@@ -145,5 +145,21 @@
       "updatedAt": "2026-11-19T03:22:40.897Z"
     }
   ],
-  "sessions": {}
+  "sessions": {
+    "telegram:894685975": {
+      "userId": "894685975",
+      "channel": "telegram",
+      "step": "ENTERING_NAME",
+      "cart": [
+        {
+          "productId": "prod-001",
+          "productName": "AeroSound Pro Wireless Headphones",
+          "unitPrice": 129.99,
+          "quantity": 1
+        }
+      ],
+      "updatedAt": 1795059628066,
+      "currentProductId": "prod-001"
+    }
+  }
 }
