@@ -8,7 +8,7 @@
       "price": 129.99,
       "category": "Audio",
       "image": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80",
-      "stock": 41
+      "stock": 40
     },
     {
       "id": "prod-002",
@@ -18,7 +18,7 @@
       "price": 199.5,
       "category": "Wearables",
       "image": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&q=80",
-      "stock": 29
+      "stock": 28
     },
     {
       "id": "prod-003",
@@ -28,7 +28,7 @@
       "price": 89,
       "category": "Accessories",
       "image": "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=800&q=80",
-      "stock": 24
+      "stock": 23
     },
     {
       "id": "prod-004",
@@ -38,7 +38,7 @@
       "price": 49.99,
       "category": "Accessories",
       "image": "https://images.unsplash.com/photo-1609592426867-b5055b85a3fd?w=800&q=80",
-      "stock": 59
+      "stock": 58
     },
     {
       "id": "prod-005",
@@ -48,7 +48,7 @@
       "price": 59,
       "category": "Home & Office",
       "image": "https://images.unsplash.com/photo-1534349762230-e0cadf78f5da?w=800&q=80",
-      "stock": 19
+      "stock": 18
     },
     {
       "id": "prod-006",
@@ -58,10 +58,68 @@
       "price": 74.99,
       "category": "Accessories",
       "image": "https://images.unsplash.com/photo-1616440347437-b1c73416efc2?w=800&q=80",
-      "stock": 34
+      "stock": 33
     }
   ],
   "orders": [
+    {
+      "customerName": "ugh",
+      "customerPhone": "099944923",
+      "customerAddress": "t70",
+      "items": [
+        {
+          "productId": "prod-001",
+          "productName": "AeroSound Pro Wireless Headphones",
+          "quantity": 1,
+          "unitPrice": 129.99,
+          "totalPrice": 129.99
+        },
+        {
+          "productId": "prod-002",
+          "productName": "TitanFit Smartwatch Ultra",
+          "quantity": 1,
+          "unitPrice": 199.5,
+          "totalPrice": 199.5
+        },
+        {
+          "productId": "prod-003",
+          "productName": "Vortex RGB Mechanical Keyboard",
+          "quantity": 1,
+          "unitPrice": 89,
+          "totalPrice": 89
+        },
+        {
+          "productId": "prod-004",
+          "productName": "VoltSpeed 20,000mAh Power Bank",
+          "quantity": 1,
+          "unitPrice": 49.99,
+          "totalPrice": 49.99
+        },
+        {
+          "productId": "prod-005",
+          "productName": "Lumina Smart Desk Lamp",
+          "quantity": 1,
+          "unitPrice": 59,
+          "totalPrice": 59
+        },
+        {
+          "productId": "prod-006",
+          "productName": "HyperHub 10-in-1 USB-C Dock",
+          "quantity": 1,
+          "unitPrice": 74.99,
+          "totalPrice": 74.99
+        }
+      ],
+      "totalAmount": 602.47,
+      "currency": "USD",
+      "status": "CONFIRMED",
+      "channel": "telegram",
+      "paymentMethod": "COD",
+      "notes": "Placed via Telegram Mini App. User: Browser Preview",
+      "id": "ORD-76633",
+      "createdAt": "2026-11-23T16:39:05.898Z",
+      "updatedAt": "2026-11-23T16:39:05.898Z"
+    },
     {
       "customerName": "Rith Sovandara",
       "customerPhone": "+85599944923",
@@ -149,17 +207,9 @@
     "telegram:894685975": {
       "userId": "894685975",
       "channel": "telegram",
-      "step": "ENTERING_NAME",
-      "cart": [
-        {
-          "productId": "prod-001",
-          "productName": "AeroSound Pro Wireless Headphones",
-          "unitPrice": 129.99,
-          "quantity": 1
-        }
-      ],
-      "updatedAt": 1795059628066,
-      "currentProductId": "prod-001"
+      "step": "IDLE",
+      "cart": [],
+      "updatedAt": 1795451955020
     }
   }
 }
