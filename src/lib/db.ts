@@ -2,8 +2,11 @@ import fs from 'fs';
 import path from 'path';
 import { Product, Order, BotSession, OrderStatus } from './types';
 
-const DATA_DIR = path.join(process.cwd(), 'data');
+// In Vercel serverless functions, the root directory is read-only, but /tmp is writable
+const IS_VERCEL = process.env.VERCEL === '1' || !!process.env.AWS_LAMBDA_FUNCTION_NAME;
+const DATA_DIR = IS_VERCEL ? path.join('/tmp', 'novamart_data') : path.join(process.cwd(), 'data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
+const BUNDLED_DB_FILE = path.join(process.cwd(), 'data', 'db.json');
 
 interface DatabaseSchema {
   products: Product[];
@@ -74,41 +77,65 @@ const DEFAULT_PRODUCTS: Product[] = [
   }
 ];
 
+// In-memory cache to guarantee fast response and fail-safe writes
+let inMemoryDb: DatabaseSchema | null = null;
+
 function initDb(): DatabaseSchema {
+  if (inMemoryDb) {
+    return inMemoryDb;
+  }
+
   try {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
-    if (!fs.existsSync(DB_FILE)) {
-      const initialData: DatabaseSchema = {
-        products: DEFAULT_PRODUCTS,
-        orders: [],
-        sessions: {}
-      };
-      fs.writeFileSync(DB_FILE, JSON.stringify(initialData, null, 2), 'utf-8');
-      return initialData;
+    // Check if writable DB exists
+    if (fs.existsSync(DB_FILE)) {
+      const raw = fs.readFileSync(DB_FILE, 'utf-8');
+      inMemoryDb = JSON.parse(raw);
+      return inMemoryDb!;
     }
 
-    const raw = fs.readFileSync(DB_FILE, 'utf-8');
-    return JSON.parse(raw);
-  } catch (err) {
-    console.error('Error initializing db:', err);
-    return {
+    // Check if bundled db.json exists to seed from
+    if (fs.existsSync(BUNDLED_DB_FILE)) {
+      try {
+        const bundledRaw = fs.readFileSync(BUNDLED_DB_FILE, 'utf-8');
+        const bundledData = JSON.parse(bundledRaw);
+        inMemoryDb = bundledData;
+        saveDb(bundledData);
+        return inMemoryDb!;
+      } catch (err) {
+        console.warn('Could not read bundled db file:', err);
+      }
+    }
+
+    // Initialize clean database
+    const initialData: DatabaseSchema = {
       products: DEFAULT_PRODUCTS,
       orders: [],
       sessions: {}
     };
+    inMemoryDb = initialData;
+    saveDb(initialData);
+    return inMemoryDb;
+  } catch (err) {
+    console.error('Error initializing db, falling back to memory:', err);
+    inMemoryDb = {
+      products: DEFAULT_PRODUCTS,
+      orders: [],
+      sessions: {}
+    };
+    return inMemoryDb;
   }
 }
 
 function saveDb(data: DatabaseSchema): void {
+  inMemoryDb = data;
   try {
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });
     }
     fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
   } catch (err) {
-    console.error('Error saving db:', err);
+    // In serverless environments, file write errors are non-fatal because in-memory is updated
+    console.warn('Filesystem save warning (continuing with in-memory):', err);
   }
 }
 

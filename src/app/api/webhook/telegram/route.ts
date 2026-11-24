@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { processTelegramMessage, sendTelegramApiMessage } from '@/lib/telegramBotEngine';
+import { processTelegramMessage, sendTelegramApiMessage, answerTelegramCallbackQuery } from '@/lib/telegramBotEngine';
 
 export async function POST(request: Request) {
   try {
@@ -9,6 +9,7 @@ export async function POST(request: Request) {
     let userName = 'Customer';
     let text = '';
     let callbackData = '';
+    let callbackQueryId = '';
     let chatId: string | number = '';
 
     if (update.message) {
@@ -21,6 +22,12 @@ export async function POST(request: Request) {
       userId = String(update.callback_query.from?.id || chatId);
       userName = [update.callback_query.from?.first_name, update.callback_query.from?.last_name].filter(Boolean).join(' ') || 'Customer';
       callbackData = update.callback_query.data;
+      callbackQueryId = update.callback_query.id;
+    }
+
+    if (callbackQueryId) {
+      // Promptly acknowledge callback to remove loading spinner in Telegram client
+      await answerTelegramCallbackQuery(callbackQueryId);
     }
 
     if (chatId) {

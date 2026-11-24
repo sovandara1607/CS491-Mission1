@@ -6,15 +6,13 @@ import { useCart } from '@/context/CartContext';
 import { 
   ShoppingBag, 
   Send, 
-  MessageSquare, 
   Search,
   ArrowUpRight,
   ShieldCheck,
   Truck,
   CheckCircle2,
   Clock,
-  HelpCircle,
-  PhoneCall
+  Smartphone
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -26,7 +24,6 @@ export default function HomePage() {
   const { addToCart } = useCart();
 
   const botUsername = (process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || 'nova123456789_bot').replace(/^@/, '');
-  const waPhone = (process.env.NEXT_PUBLIC_WHATSAPP_PHONE || '85599944923').replace(/[^0-9]/g, '');
 
   useEffect(() => {
     fetch('/api/products')
@@ -49,11 +46,6 @@ export default function HomePage() {
                           p.sku.toLowerCase().includes(search.toLowerCase());
     return matchesCategory && matchesSearch;
   });
-
-  const getWhatsAppProductLink = (product: Product) => {
-    const msg = `Hello NovaMart! 🛍️\nI would like to order *${product.name}* (Price: $${product.price.toFixed(2)}, Code: ${product.sku}).\nPlease confirm delivery availability.`;
-    return `https://wa.me/${waPhone}?text=${encodeURIComponent(msg)}`;
-  };
 
   const getTelegramProductLink = (product: Product) => {
     return `https://t.me/${botUsername}?start=buy_${product.id}`;
@@ -86,7 +78,7 @@ export default function HomePage() {
 
             <p className="text-sm sm:text-base text-[var(--muted)] max-w-2xl leading-relaxed pt-1">
               Studio wireless audio, mechanical keyboards, smart wearables, and desktop peripherals. 
-              Order directly on our web store, or chat with our team on Telegram and WhatsApp with instant Cash on Delivery.
+              Order directly on our web store, or chat seamlessly via Telegram with instant Cash on Delivery and ABA KHQR.
             </p>
           </div>
 
@@ -107,19 +99,17 @@ export default function HomePage() {
               className="kk-btn-secondary"
             >
               <Send className="w-3.5 h-3.5 text-sky-400" />
-              <span>Open in Telegram (@{botUsername})</span>
+              <span>Open Telegram Bot (@{botUsername})</span>
               <ArrowUpRight className="w-3.5 h-3.5 text-[var(--subtle)]" />
             </a>
 
-            <a
-              href={`https://wa.me/${waPhone}?text=Hello%20NovaMart!%20I%20have%20an%20order%20inquiry`}
-              target="_blank"
-              rel="noreferrer"
-              className="kk-btn-secondary text-[#25D366] hover:text-[#25D366]"
+            <Link
+              href="/telegram-app"
+              className="kk-btn-secondary"
             >
-              <MessageSquare className="w-3.5 h-3.5" />
-              <span>WhatsApp: +{waPhone}</span>
-            </a>
+              <Smartphone className="w-3.5 h-3.5 text-sky-400" />
+              <span>Telegram Mini App</span>
+            </Link>
           </div>
 
           {/* Core Service Guarantees Matrix */}
@@ -288,26 +278,16 @@ export default function HomePage() {
                       </button>
                     </div>
 
-                    {/* Direct Messaging Order Buttons */}
-                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-dashed border-[var(--line)]">
+                    {/* Direct Telegram Order Button */}
+                    <div className="pt-2 border-t border-dashed border-[var(--line)]">
                       <a
                         href={getTelegramProductLink(product)}
                         target="_blank"
                         rel="noreferrer"
-                        className="py-1.5 px-2 bg-[var(--card-bg-subtle)] border border-[var(--line)] hover:border-[var(--line-strong)] text-[11px] font-mono text-sky-400 hover:text-white transition flex items-center justify-center gap-1 text-center"
+                        className="w-full py-1.5 px-3 bg-[var(--card-bg-subtle)] border border-[var(--line)] hover:border-sky-400 text-[11px] font-mono text-sky-400 hover:text-white transition flex items-center justify-center gap-1.5 text-center"
                       >
                         <Send className="w-3 h-3 text-sky-400" />
-                        <span>TELEGRAM ↗</span>
-                      </a>
-
-                      <a
-                        href={getWhatsAppProductLink(product)}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="py-1.5 px-2 bg-[var(--card-bg-subtle)] border border-[var(--line)] hover:border-[var(--line-strong)] text-[11px] font-mono text-emerald-400 hover:text-white transition flex items-center justify-center gap-1 text-center"
-                      >
-                        <MessageSquare className="w-3 h-3 text-emerald-400" />
-                        <span>WHATSAPP ↗</span>
+                        <span>ORDER VIA TELEGRAM ↗</span>
                       </a>
                     </div>
                   </div>
@@ -329,7 +309,7 @@ export default function HomePage() {
               Order Your Way
             </h2>
             <p className="text-xs sm:text-sm text-[var(--muted)] max-w-2xl leading-relaxed">
-              We make ordering fast and straightforward. Pick whichever channel is most convenient for you.
+              We make hardware shopping seamless across Cambodia. Order directly on web or via Telegram without downloading heavy apps.
             </p>
           </div>
 
@@ -339,23 +319,23 @@ export default function HomePage() {
               <span className="text-xs font-mono font-bold text-white">01 // WEB CHECKOUT</span>
               <h3 className="text-sm font-bold text-white">Direct on Website</h3>
               <p className="text-xs text-[var(--muted)] leading-relaxed">
-                Add items to your cart, click checkout, enter your phone and delivery address. No account registration needed.
+                Add items to your cart, click checkout, enter your phone and delivery address. Fast delivery with Cash on Delivery.
               </p>
             </div>
 
             <div className="p-5 border border-[var(--line)] bg-[var(--card-bg-subtle)] space-y-3">
-              <span className="text-xs font-mono font-bold text-sky-400">02 // TELEGRAM BOT & TMA</span>
-              <h3 className="text-sm font-bold text-white">Inside Telegram</h3>
+              <span className="text-xs font-mono font-bold text-sky-400">02 // TELEGRAM MINI APP</span>
+              <h3 className="text-sm font-bold text-white">Embedded Mini App</h3>
               <p className="text-xs text-[var(--muted)] leading-relaxed">
-                Message <strong className="text-white">@{botUsername}</strong> to browse or open our Mini App. Receive instant live order and shipping updates.
+                Open our Telegram Mini App directly inside your chat. Browse photos, filter categories, and checkout in 10 seconds.
               </p>
             </div>
 
             <div className="p-5 border border-[var(--line)] bg-[var(--card-bg-subtle)] space-y-3">
-              <span className="text-xs font-mono font-bold text-emerald-400">03 // WHATSAPP DIRECT</span>
-              <h3 className="text-sm font-bold text-white">Chat & Confirm</h3>
+              <span className="text-xs font-mono font-bold text-indigo-400">03 // TELEGRAM BOT</span>
+              <h3 className="text-sm font-bold text-white">Chat With @{botUsername}</h3>
               <p className="text-xs text-[var(--muted)] leading-relaxed">
-                Click "WhatsApp" on any product to send an instant order inquiry to our team at <strong className="text-white">+{waPhone}</strong>.
+                Send /start or /catalog to place conversational orders, choose your destination, and receive instant tracking numbers.
               </p>
             </div>
 
@@ -373,7 +353,7 @@ export default function HomePage() {
             </div>
             <div>
               <span className="font-mono text-white font-bold block mb-1">Need help or advice?</span>
-              Contact our sales desk on Telegram (@{botUsername}) or call +{waPhone}.
+              Contact our sales desk on Telegram (@{botUsername}) anytime.
             </div>
           </div>
 

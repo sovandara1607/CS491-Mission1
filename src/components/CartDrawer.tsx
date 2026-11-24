@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useCart } from '@/context/CartContext';
-import { X, Trash2, Plus, Minus, ShoppingBag, Send, MessageSquare, Check, ArrowRight, ShieldCheck } from 'lucide-react';
+import { X, Trash2, Plus, Minus, ShoppingBag, Send, ShieldCheck, ArrowRight } from 'lucide-react';
 
 export default function CartDrawer() {
   const { cart, removeFromCart, updateQuantity, clearCart, totalAmount, isCartOpen, setIsCartOpen } = useCart();
@@ -36,7 +36,7 @@ export default function CartDrawer() {
           totalAmount,
           paymentMethod,
           channel: 'web',
-          notes: 'Web store order'
+          notes: 'Web store direct order'
         })
       });
 
@@ -54,23 +54,6 @@ export default function CartDrawer() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleWhatsAppOrder = () => {
-    const businessPhone = (process.env.NEXT_PUBLIC_WHATSAPP_PHONE || '85599944923').replace(/[^0-9]/g, '');
-    let text = `Hello NovaMart! 🛍️\nI would like to order the following items from your website:\n\n`;
-
-    cart.forEach(item => {
-      text += `• ${item.productName} (x${item.quantity}) — $${(item.unitPrice * item.quantity).toFixed(2)}\n`;
-    });
-
-    text += `\nTotal: $${totalAmount.toFixed(2)}\n`;
-    if (customerName) text += `Name: ${customerName}\n`;
-    if (customerAddress) text += `Address: ${customerAddress}\n`;
-    text += `\nPlease confirm availability and delivery. Thank you!`;
-
-    const url = `https://wa.me/${businessPhone}?text=${encodeURIComponent(text)}`;
-    window.open(url, '_blank');
   };
 
   const handleTelegramOrder = () => {
@@ -115,7 +98,7 @@ export default function CartDrawer() {
                   ✓
                 </div>
                 <div>
-                  <h3 className="text-base font-bold font-mono text-white">Order Placed</h3>
+                  <h3 className="text-base font-bold font-mono text-white">Order Received</h3>
                   <p className="text-xs font-mono text-[var(--accent-green)] mt-1">
                     Order ID: #{orderSuccess.id}
                   </p>
@@ -124,7 +107,7 @@ export default function CartDrawer() {
                 <div className="p-3 border border-[var(--line)] bg-[var(--input-bg)] text-left text-xs font-mono space-y-1.5">
                   <p className="flex justify-between"><span className="text-[var(--subtle)]">Customer:</span> <span className="font-bold text-white">{orderSuccess.customerName}</span></p>
                   <p className="flex justify-between"><span className="text-[var(--subtle)]">Total:</span> <span className="font-bold text-white">${orderSuccess.totalAmount.toFixed(2)}</span></p>
-                  <p className="flex justify-between"><span className="text-[var(--subtle)]">Payment:</span> <span>{orderSuccess.paymentMethod}</span></p>
+                  <p className="flex justify-between"><span className="text-[var(--subtle)]">Payment:</span> <span>Cash on Delivery (COD)</span></p>
                   <p className="flex justify-between"><span className="text-[var(--subtle)]">Shipping to:</span> <span className="truncate max-w-[180px]">{orderSuccess.customerAddress}</span></p>
                 </div>
 
@@ -146,7 +129,7 @@ export default function CartDrawer() {
               <div className="text-center py-24 space-y-3">
                 <p className="font-mono text-xs text-[var(--subtle)]">[ Your cart is empty ]</p>
                 <p className="text-xs text-[var(--muted)] max-w-xs mx-auto">
-                  Browse our catalog and add products, or purchase directly via Telegram and WhatsApp.
+                  Browse our catalog and add products, or purchase directly via Telegram Bot.
                 </p>
               </div>
             ) : isCheckingOut ? (
@@ -158,13 +141,13 @@ export default function CartDrawer() {
                     onClick={() => setIsCheckingOut(false)}
                     className="text-[11px] font-mono text-[var(--accent-purple)] hover:underline"
                   >
-                    ← Back to items
+                    ← Back to Cart
                   </button>
                 </div>
 
                 <div>
                   <label className="block text-[10px] font-mono text-[var(--subtle)] uppercase mb-1">
-                    Full Name
+                    Your Full Name
                   </label>
                   <input
                     type="text"
@@ -178,7 +161,7 @@ export default function CartDrawer() {
 
                 <div>
                   <label className="block text-[10px] font-mono text-[var(--subtle)] uppercase mb-1">
-                    Phone Number
+                    Phone Number (for Courier)
                   </label>
                   <input
                     type="tel"
@@ -196,58 +179,69 @@ export default function CartDrawer() {
                   </label>
                   <textarea
                     required
-                    rows={2}
+                    rows={3}
                     value={customerAddress}
                     onChange={e => setCustomerAddress(e.target.value)}
-                    placeholder="Street, Sangkat, Khan / Province"
+                    placeholder="Street, Sangkat, Khan / Province, nearest landmark"
                     className="w-full px-3 py-2 text-xs bg-[var(--input-bg)] border border-[var(--line)] text-white focus:outline-none focus:border-[var(--line-strong)] font-mono"
                   />
                 </div>
 
                 <div>
                   <label className="block text-[10px] font-mono text-[var(--subtle)] uppercase mb-1">
-                    Payment Option
+                    Payment Method
                   </label>
-                  <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+                  <div className="grid grid-cols-2 gap-2">
                     <button
                       type="button"
                       onClick={() => setPaymentMethod('COD')}
-                      className={`p-2.5 border text-center transition ${
+                      className={`p-2.5 text-xs font-mono text-left border transition ${
                         paymentMethod === 'COD'
-                          ? 'border-white bg-white text-black font-bold'
-                          : 'border-[var(--line)] text-[var(--muted)] hover:border-white'
+                          ? 'border-white bg-white/10 text-white font-bold'
+                          : 'border-[var(--line)] text-[var(--muted)] hover:border-[var(--line-strong)]'
                       }`}
                     >
-                      Cash on Delivery
+                      <span className="block text-white">Cash on Delivery</span>
+                      <span className="text-[10px] text-[var(--subtle)]">Pay when parcel arrives</span>
                     </button>
+
                     <button
                       type="button"
                       onClick={() => setPaymentMethod('BANK_TRANSFER')}
-                      className={`p-2.5 border text-center transition ${
+                      className={`p-2.5 text-xs font-mono text-left border transition ${
                         paymentMethod === 'BANK_TRANSFER'
-                          ? 'border-white bg-white text-black font-bold'
-                          : 'border-[var(--line)] text-[var(--muted)] hover:border-white'
+                          ? 'border-white bg-white/10 text-white font-bold'
+                          : 'border-[var(--line)] text-[var(--muted)] hover:border-[var(--line-strong)]'
                       }`}
                     >
-                      ABA / KHQR
+                      <span className="block text-white">ABA KHQR</span>
+                      <span className="text-[10px] text-[var(--subtle)]">Scan upon delivery</span>
                     </button>
                   </div>
                 </div>
 
-                <div className="pt-2 border-t border-[var(--line)] space-y-3">
-                  <div className="flex justify-between font-mono font-bold text-sm">
-                    <span>Total Amount:</span>
+                <div className="p-3 border border-[var(--line)] bg-[var(--card-bg-subtle)] space-y-1 text-xs font-mono">
+                  <div className="flex justify-between text-[var(--muted)]">
+                    <span>Subtotal:</span>
                     <span className="text-white">${totalAmount.toFixed(2)}</span>
                   </div>
-
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full py-3 bg-white text-black font-mono font-bold text-xs hover:bg-slate-200 transition disabled:opacity-50"
-                  >
-                    {loading ? 'Processing...' : `Place Order ($${totalAmount.toFixed(2)}) →`}
-                  </button>
+                  <div className="flex justify-between text-[var(--muted)]">
+                    <span>Shipping:</span>
+                    <span className="text-[var(--accent-green)] font-semibold">FREE</span>
+                  </div>
+                  <div className="flex justify-between font-bold text-white pt-1 border-t border-[var(--line)]">
+                    <span>Total Due:</span>
+                    <span>${totalAmount.toFixed(2)}</span>
+                  </div>
                 </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-3 bg-white text-black font-mono font-bold text-xs hover:bg-slate-200 transition flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {loading ? 'Placing Order...' : `Confirm Order ($${totalAmount.toFixed(2)}) →`}
+                </button>
               </form>
             ) : (
               <div className="space-y-3">
@@ -256,45 +250,40 @@ export default function CartDrawer() {
                     key={item.productId}
                     className="p-3 border border-[var(--line)] bg-[var(--card-bg)] flex gap-3 items-center"
                   >
-                    {item.image && (
-                      <img
-                        src={item.image}
-                        alt={item.productName}
-                        className="w-12 h-12 object-cover border border-[var(--line)] bg-black/40 flex-shrink-0"
-                      />
-                    )}
                     <div className="flex-1 min-w-0">
                       <h4 className="text-xs font-bold text-white truncate">{item.productName}</h4>
-                      <p className="text-[10px] font-mono text-[var(--subtle)]">${item.unitPrice.toFixed(2)} each</p>
-                      
-                      <div className="flex items-center gap-1.5 mt-2">
-                        <button
-                          onClick={() => updateQuantity(item.productId, item.quantity - 1)}
-                          className="w-5 h-5 border border-[var(--line)] flex items-center justify-center text-[var(--muted)] hover:text-white"
-                        >
-                          <Minus className="w-3 h-3" />
-                        </button>
-                        <span className="text-xs font-mono font-bold px-1">{item.quantity}</span>
-                        <button
-                          onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                          className="w-5 h-5 border border-[var(--line)] flex items-center justify-center text-[var(--muted)] hover:text-white"
-                        >
-                          <Plus className="w-3 h-3" />
-                        </button>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xs font-mono text-white">${item.unitPrice.toFixed(2)}</span>
+                        <span className="text-[10px] font-mono text-[var(--subtle)]">x {item.quantity}</span>
+                        <span className="text-[10px] font-mono text-[var(--accent-purple)]">
+                          = ${(item.unitPrice * item.quantity).toFixed(2)}
+                        </span>
                       </div>
                     </div>
 
-                    <div className="text-right flex flex-col justify-between items-end self-stretch">
-                      <span className="text-xs font-mono font-bold text-white">
-                        ${(item.unitPrice * item.quantity).toFixed(2)}
-                      </span>
+                    <div className="flex items-center border border-[var(--line)] bg-[#0c0d12]">
                       <button
-                        onClick={() => removeFromCart(item.productId)}
-                        className="text-[var(--subtle)] hover:text-rose-400 text-[10px] font-mono"
+                        onClick={() => updateQuantity(item.productId, item.quantity - 1)}
+                        className="w-6 h-6 flex items-center justify-center text-[var(--muted)] hover:text-white"
                       >
-                        [Remove]
+                        <Minus className="w-3 h-3" />
+                      </button>
+                      <span className="text-xs font-mono font-bold px-2">{item.quantity}</span>
+                      <button
+                        onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                        className="w-6 h-6 flex items-center justify-center text-[var(--muted)] hover:text-white"
+                      >
+                        <Plus className="w-3 h-3" />
                       </button>
                     </div>
+
+                    <button
+                      onClick={() => removeFromCart(item.productId)}
+                      className="p-1.5 text-[var(--subtle)] hover:text-red-400 transition"
+                      aria-label="Remove item"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 ))}
               </div>
@@ -321,19 +310,10 @@ export default function CartDrawer() {
               <div className="relative flex py-1 items-center">
                 <div className="flex-grow border-t border-[var(--line)]"></div>
                 <span className="flex-shrink mx-2 text-[9px] font-mono text-[var(--subtle)] uppercase">
-                  Or Order via Chat
+                  Or Order via Telegram
                 </span>
                 <div className="flex-grow border-t border-[var(--line)]"></div>
               </div>
-
-              {/* WhatsApp Checkout */}
-              <button
-                onClick={handleWhatsAppOrder}
-                className="w-full py-2 bg-[var(--card-bg-subtle)] border border-[var(--line)] hover:border-[#25D366] text-[#25D366] font-mono text-xs font-bold transition flex items-center justify-center gap-2"
-              >
-                <MessageSquare className="w-3.5 h-3.5" />
-                <span>Send Cart to WhatsApp</span>
-              </button>
 
               {/* Telegram Checkout */}
               <button

@@ -1,36 +1,43 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Order, OrderChannel, OrderStatus } from '@/lib/types';
+import { Order, OrderStatus, OrderChannel } from '@/lib/types';
 import { 
-  ShoppingBag, 
   Send, 
-  MessageSquare, 
   Globe, 
-  Check, 
-  RefreshCw, 
   Search, 
-  Eye,
-  X,
-  ArrowUpRight
+  RefreshCw, 
+  CheckCircle2, 
+  Clock, 
+  Truck, 
+  Package, 
+  XCircle,
+  ExternalLink,
+  ChevronRight,
+  TrendingUp,
+  AlertCircle
 } from 'lucide-react';
 
 export default function AdminPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [channelFilter, setChannelFilter] = useState<'all' | OrderChannel>('all');
-  const [statusFilter, setStatusFilter] = useState<'all' | OrderStatus>('all');
-  const [search, setSearch] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [channelFilter, setChannelFilter] = useState<'all' | 'telegram' | 'web'>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [updatingStatus, setUpdatingStatus] = useState(false);
 
   const fetchOrders = async () => {
-    setLoading(true);
     try {
+      setLoading(true);
       const res = await fetch('/api/orders');
       const data = await res.json();
       if (data.success) {
         setOrders(data.orders);
+        if (selectedOrder) {
+          const updated = data.orders.find((o: Order) => o.id === selectedOrder.id);
+          if (updated) setSelectedOrder(updated);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -41,27 +48,29 @@ export default function AdminPage() {
 
   useEffect(() => {
     fetchOrders();
+    const interval = setInterval(fetchOrders, 8000);
+    return () => clearInterval(interval);
   }, []);
 
-  const handleUpdateStatus = async (orderId: string, newStatus: OrderStatus) => {
-    setUpdatingId(orderId);
+  const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
+    setUpdatingStatus(true);
     try {
-      const res = await fetch('/api/orders', {
+      const res = await fetch(`/api/orders/${orderId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId, status: newStatus })
+        body: JSON.stringify({ status: newStatus })
       });
       const data = await res.json();
       if (data.success) {
         setOrders(prev => prev.map(o => o.id === orderId ? data.order : o));
-        if (selectedOrder && selectedOrder.id === orderId) {
+        if (selectedOrder?.id === orderId) {
           setSelectedOrder(data.order);
         }
       }
     } catch (err) {
       console.error(err);
     } finally {
-      setUpdatingId(null);
+      setUpdatingStatus(false);
     }
   };
 
@@ -69,7 +78,6 @@ export default function AdminPage() {
   const totalRevenue = orders.reduce((sum, o) => sum + o.totalAmount, 0);
   const webOrders = orders.filter(o => o.channel === 'web');
   const tgOrders = orders.filter(o => o.channel === 'telegram');
-  const waOrders = orders.filter(o => o.channel === 'whatsapp');
 
   const filteredOrders = orders.filter(order => {
     const matchesChannel = channelFilter === 'all' || order.channel === channelFilter;
@@ -89,13 +97,6 @@ export default function AdminPage() {
           <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-mono border border-sky-400/30 text-sky-400 bg-sky-950/20">
             <Send className="w-2.5 h-2.5" />
             <span>TELEGRAM</span>
-          </span>
-        );
-      case 'whatsapp':
-        return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-mono border border-emerald-400/30 text-emerald-400 bg-emerald-950/20">
-            <MessageSquare className="w-2.5 h-2.5" />
-            <span>WHATSAPP</span>
           </span>
         );
       default:
@@ -121,97 +122,104 @@ export default function AdminPage() {
       case 'CANCELLED':
         return <span className="px-2 py-0.5 text-[10px] font-mono border border-rose-400/30 text-rose-400 bg-rose-950/20">CANCELLED</span>;
       default:
-        return <span className="px-2 py-0.5 text-[10px] font-mono border border-white/10 text-[var(--muted)]">{status}</span>;
+        return <span className="px-2 py-0.5 text-[10px] font-mono border border-zinc-500/30 text-zinc-400 bg-zinc-900/40">PENDING</span>;
     }
   };
 
   return (
     <div className="max-w-[1140px] mx-auto px-4 sm:px-8 py-10 space-y-8 font-sans text-white">
       
-      {/* Title & Refresh */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[var(--line)]">
-        <div>
+        <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 bg-[var(--accent-green)]"></span>
-            <span className="kk-tag">OPERATIONS // CENTRAL DISPATCH</span>
+            <span className="w-5 h-5 bg-white text-black flex items-center justify-center font-khmer text-[11px] font-bold leading-none select-none">
+              ន
+            </span>
+            <span className="kk-tag">SYSTEM // OPERATIONS CONSOLE</span>
           </div>
-          <h1 className="text-3xl font-extrabold text-white mt-1">Order Management</h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+            Omnichannel Orders
+          </h1>
+          <p className="text-xs text-[var(--muted)] font-mono">
+            Real-time feed across Web Store and Telegram Bot & Mini App.
+          </p>
         </div>
 
         <button
           onClick={fetchOrders}
           disabled={loading}
-          className="kk-btn-secondary text-xs self-start sm:self-auto font-mono"
+          className="kk-btn-secondary text-xs self-start sm:self-auto"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-          <span>SYNC_ORDERS</span>
+          <span>Refresh Feed</span>
         </button>
       </div>
 
-      {/* Metric Cards Matrix (KhmerKit Grid) */}
+      {/* Metrics Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 border border-[var(--line)] bg-[var(--card-bg)] divide-y sm:divide-y-0 sm:divide-x divide-[var(--line)]">
         <div className="p-5 space-y-1">
-          <span className="kk-tag">GROSS SALES</span>
-          <div className="text-2xl font-mono font-bold text-white">
+          <span className="kk-tag">TOTAL REVENUE</span>
+          <p className="text-2xl font-bold font-mono text-white">
             ${totalRevenue.toFixed(2)}
-          </div>
-          <p className="text-[10px] font-mono text-[var(--subtle)]">
-            {orders.length} TOTAL_ORDERS
           </p>
+          <p className="text-[10px] text-[var(--subtle)] font-mono">{orders.length} orders total</p>
         </div>
 
         <div className="p-5 space-y-1">
           <span className="kk-tag">TELEGRAM CHANNEL</span>
-          <div className="text-2xl font-mono font-bold text-sky-400">
+          <p className="text-2xl font-bold font-mono text-sky-400">
             {tgOrders.length}
-          </div>
-          <p className="text-[10px] font-mono text-[var(--subtle)]">
-            ${tgOrders.reduce((s, o) => s + o.totalAmount, 0).toFixed(2)} REVENUE
           </p>
-        </div>
-
-        <div className="p-5 space-y-1">
-          <span className="kk-tag">WHATSAPP CHANNEL</span>
-          <div className="text-2xl font-mono font-bold text-emerald-400">
-            {waOrders.length}
-          </div>
-          <p className="text-[10px] font-mono text-[var(--subtle)]">
-            ${waOrders.reduce((s, o) => s + o.totalAmount, 0).toFixed(2)} REVENUE
+          <p className="text-[10px] text-[var(--subtle)] font-mono">
+            ${tgOrders.reduce((s, o) => s + o.totalAmount, 0).toFixed(2)} via Bot & TMA
           </p>
         </div>
 
         <div className="p-5 space-y-1">
           <span className="kk-tag">WEB CHANNEL</span>
-          <div className="text-2xl font-mono font-bold text-white">
+          <p className="text-2xl font-bold font-mono text-white">
             {webOrders.length}
-          </div>
-          <p className="text-[10px] font-mono text-[var(--subtle)]">
-            ${webOrders.reduce((s, o) => s + o.totalAmount, 0).toFixed(2)} REVENUE
           </p>
+          <p className="text-[10px] text-[var(--subtle)] font-mono">
+            ${webOrders.reduce((s, o) => s + o.totalAmount, 0).toFixed(2)} on web store
+          </p>
+        </div>
+
+        <div className="p-5 space-y-1">
+          <span className="kk-tag">FULFILLMENT</span>
+          <p className="text-2xl font-bold font-mono text-[var(--accent-green)]">
+            {orders.filter(o => o.status === 'DELIVERED').length} / {orders.length}
+          </p>
+          <p className="text-[10px] text-[var(--subtle)] font-mono">Delivered packages</p>
         </div>
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 p-4 border border-[var(--line)] bg-[var(--card-bg)]">
+      {/* Controls Bar: Search & Filters */}
+      <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+        
+        {/* Search */}
         <div className="relative flex-1 max-w-md">
           <Search className="w-3.5 h-3.5 text-[var(--subtle)] absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search by ID, name, or phone..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full pl-8 pr-3 py-1.5 text-xs bg-[var(--input-bg)] border border-[var(--line)] text-white placeholder-[var(--subtle)] font-mono focus:outline-none focus:border-[var(--line-strong)]"
+            placeholder="Search Order ID, customer, phone, address..."
+            className="w-full pl-9 pr-3 py-2 text-xs bg-[var(--input-bg)] border border-[var(--line)] text-white placeholder-[var(--subtle)] font-mono focus:outline-none focus:border-[var(--line-strong)]"
           />
         </div>
 
+        {/* Channel & Status Filters */}
         <div className="flex flex-wrap items-center gap-2">
-          {/* Channel selector */}
-          <div className="flex items-center border border-[var(--line)] bg-[var(--card-bg-subtle)] text-xs font-mono">
-            {(['all', 'telegram', 'whatsapp', 'web'] as const).map(ch => (
+          
+          {/* Channel Filter */}
+          <div className="flex items-center border border-[var(--line)] bg-[var(--card-bg-subtle)]">
+            {(['all', 'telegram', 'web'] as const).map(ch => (
               <button
                 key={ch}
                 onClick={() => setChannelFilter(ch)}
-                className={`px-3 py-1.5 uppercase transition ${
+                className={`px-3 py-1.5 text-xs font-mono uppercase transition ${
                   channelFilter === ch
                     ? 'bg-white text-black font-bold'
                     : 'text-[var(--muted)] hover:text-white'
@@ -222,161 +230,182 @@ export default function AdminPage() {
             ))}
           </div>
 
-          {/* Status selector */}
+          {/* Status Filter */}
           <select
             value={statusFilter}
-            onChange={e => setStatusFilter(e.target.value as any)}
-            className="px-3 py-1.5 text-xs bg-[var(--input-bg)] border border-[var(--line)] text-white font-mono focus:outline-none"
+            onChange={e => setStatusFilter(e.target.value)}
+            className="px-3 py-1.5 text-xs font-mono bg-[var(--input-bg)] border border-[var(--line)] text-white focus:outline-none focus:border-[var(--line-strong)]"
           >
-            <option value="all">STATUS: ALL</option>
+            <option value="all">ALL STATUSES</option>
             <option value="CONFIRMED">CONFIRMED</option>
             <option value="PROCESSING">PROCESSING</option>
             <option value="SHIPPED">SHIPPED</option>
             <option value="DELIVERED">DELIVERED</option>
             <option value="CANCELLED">CANCELLED</option>
           </select>
+
         </div>
       </div>
 
-      {/* Orders Table */}
-      <div className="border border-[var(--line)] bg-[var(--card-bg)] overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-[var(--card-bg-subtle)] text-[var(--subtle)] font-mono uppercase text-[10px] tracking-wider border-b border-[var(--line)]">
-              <tr>
-                <th className="px-5 py-3">ORDER_ID</th>
-                <th className="px-5 py-3">CHANNEL</th>
-                <th className="px-5 py-3">CUSTOMER</th>
-                <th className="px-5 py-3">ITEMS</th>
-                <th className="px-5 py-3">TOTAL (USD)</th>
-                <th className="px-5 py-3">STATUS</th>
-                <th className="px-5 py-3">TIMESTAMP</th>
-                <th className="px-5 py-3 text-right">ACTION</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[var(--line)] text-[var(--muted)] font-mono">
-              {filteredOrders.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="text-center py-12 text-[var(--subtle)] font-mono">
-                    NO_ORDERS_FOUND
-                  </td>
-                </tr>
-              ) : (
-                filteredOrders.map(order => (
-                  <tr key={order.id} className="hover:bg-white/[0.02] transition">
-                    <td className="px-5 py-3.5 font-bold text-white">
-                      #{order.id}
-                    </td>
-                    <td className="px-5 py-3.5">
+      {/* Master/Detail Split Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        {/* Left: Orders List */}
+        <div className="lg:col-span-7 border border-[var(--line)] bg-[var(--card-bg)] divide-y divide-[var(--line)]">
+          <div className="p-3 bg-[var(--card-bg-subtle)] border-b border-[var(--line)] flex items-center justify-between text-[11px] font-mono text-[var(--subtle)]">
+            <span>ORDERS FEED ({filteredOrders.length})</span>
+            <span>CLICK TO INSPECT</span>
+          </div>
+
+          {filteredOrders.length === 0 ? (
+            <div className="p-12 text-center text-xs font-mono text-[var(--subtle)] space-y-2">
+              <p>[ NO_ORDERS_MATCHING_FILTER ]</p>
+              <p className="text-[11px] text-[var(--muted)]">Orders from Telegram and Web will appear here in real-time.</p>
+            </div>
+          ) : (
+            filteredOrders.map(order => {
+              const isSelected = selectedOrder?.id === order.id;
+              return (
+                <div
+                  key={order.id}
+                  onClick={() => setSelectedOrder(order)}
+                  className={`p-4 transition cursor-pointer flex items-center justify-between gap-4 ${
+                    isSelected
+                      ? 'bg-white/5 border-l-2 border-l-white'
+                      : 'hover:bg-white/[0.02]'
+                  }`}
+                >
+                  <div className="space-y-1.5 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono font-bold text-xs text-white">#{order.id}</span>
                       {getChannelBadge(order.channel)}
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <div className="font-bold text-white font-sans">{order.customerName}</div>
-                      <div className="text-[10px] text-[var(--subtle)]">{order.customerPhone}</div>
-                    </td>
-                    <td className="px-5 py-3.5 max-w-xs truncate text-[var(--muted)] font-sans">
-                      {order.items.map(i => `${i.productName} (x${i.quantity})`).join(', ')}
-                    </td>
-                    <td className="px-5 py-3.5 font-bold text-white">
-                      ${order.totalAmount.toFixed(2)}
-                      <span className="block text-[9px] text-[var(--subtle)]">{order.paymentMethod}</span>
-                    </td>
-                    <td className="px-5 py-3.5">
                       {getStatusBadge(order.status)}
-                    </td>
-                    <td className="px-5 py-3.5 text-[10px] text-[var(--subtle)]">
-                      {new Date(order.createdAt).toLocaleDateString()} {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </td>
-                    <td className="px-5 py-3.5 text-right">
-                      <button
-                        onClick={() => setSelectedOrder(order)}
-                        className="px-2.5 py-1 border border-[var(--line)] hover:border-white text-white text-[10px] font-mono transition"
-                      >
-                        MANAGE →
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                    </div>
 
-      {/* Order Detail Modal */}
-      {selectedOrder && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#12141b] border border-[var(--line)] max-w-lg w-full p-6 shadow-2xl space-y-6 font-mono text-white">
-            
-            <div className="flex items-center justify-between border-b border-[var(--line)] pb-3">
-              <div>
-                <h3 className="text-sm font-bold text-white">ORDER DETAILS // #{selectedOrder.id}</h3>
-                <span className="text-[10px] text-[var(--subtle)] uppercase">CHANNEL: {selectedOrder.channel}</span>
-              </div>
-              <button
-                onClick={() => setSelectedOrder(null)}
-                className="p-1 border border-[var(--line)] hover:border-white text-[var(--muted)] hover:text-white"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+                    <div className="text-xs text-[var(--muted)] flex items-center gap-2">
+                      <span className="font-bold text-white truncate">{order.customerName}</span>
+                      <span className="text-[var(--subtle)]">•</span>
+                      <span className="font-mono">{order.customerPhone}</span>
+                    </div>
 
-            {/* Customer Details */}
-            <div className="p-3 border border-[var(--line)] bg-[var(--input-bg)] text-xs space-y-1.5">
-              <p className="flex justify-between"><span className="text-[var(--subtle)]">NAME:</span> <span className="font-bold text-white font-sans">{selectedOrder.customerName}</span></p>
-              <p className="flex justify-between"><span className="text-[var(--subtle)]">PHONE:</span> <span>{selectedOrder.customerPhone || 'N/A'}</span></p>
-              <p className="flex justify-between"><span className="text-[var(--subtle)]">ADDRESS:</span> <span className="font-sans text-right max-w-xs">{selectedOrder.customerAddress}</span></p>
-              <p className="flex justify-between"><span className="text-[var(--subtle)]">NOTES:</span> <span className="text-[var(--subtle)]">{selectedOrder.notes || 'N/A'}</span></p>
-            </div>
-
-            {/* Items */}
-            <div className="space-y-2">
-              <span className="text-[10px] text-[var(--subtle)] block uppercase">ORDERED_ITEMS</span>
-              <div className="border border-[var(--line)] divide-y divide-[var(--line)] text-xs">
-                {selectedOrder.items.map((i, idx) => (
-                  <div key={idx} className="p-2.5 flex justify-between items-center">
-                    <span className="text-[var(--muted)] font-sans">{i.productName} (x{i.quantity})</span>
-                    <span className="font-bold text-white">${(i.unitPrice * i.quantity).toFixed(2)}</span>
+                    <p className="text-[11px] text-[var(--subtle)] font-mono truncate max-w-sm">
+                      {order.items.map(i => `${i.productName} (x${i.quantity})`).join(', ')}
+                    </p>
                   </div>
-                ))}
-                <div className="p-2.5 bg-[var(--card-bg-subtle)] flex justify-between font-bold">
-                  <span>TOTAL:</span>
-                  <span>${selectedOrder.totalAmount.toFixed(2)} ({selectedOrder.paymentMethod})</span>
+
+                  <div className="text-right flex-shrink-0 space-y-1">
+                    <p className="font-mono font-bold text-sm text-white">
+                      ${order.totalAmount.toFixed(2)}
+                    </p>
+                    <p className="text-[10px] font-mono text-[var(--subtle)]">
+                      {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Right: Order Detail Inspector */}
+        <div className="lg:col-span-5 border border-[var(--line)] bg-[var(--card-bg)] sticky top-24">
+          <div className="p-4 bg-[var(--card-bg-subtle)] border-b border-[var(--line)] flex items-center justify-between text-xs font-mono">
+            <span className="font-bold text-white">ORDER INSPECTOR</span>
+            {selectedOrder && (
+              <span className="text-[var(--subtle)]">#{selectedOrder.id}</span>
+            )}
+          </div>
+
+          {selectedOrder ? (
+            <div className="p-5 space-y-5 text-xs font-mono">
+              
+              {/* Status & Channel Header */}
+              <div className="flex items-center justify-between pb-4 border-b border-[var(--line)]">
+                <div>
+                  <span className="text-[10px] text-[var(--subtle)] block">CHANNEL</span>
+                  {getChannelBadge(selectedOrder.channel)}
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] text-[var(--subtle)] block">STATUS</span>
+                  {getStatusBadge(selectedOrder.status)}
                 </div>
               </div>
-            </div>
 
-            {/* Dispatch Status Update */}
-            <div className="pt-2 border-t border-[var(--line)] space-y-2">
-              <span className="text-[10px] text-[var(--subtle)] block uppercase">UPDATE_STATUS</span>
-              <div className="grid grid-cols-4 gap-2 text-xs">
-                {(['CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED'] as OrderStatus[]).map(st => (
-                  <button
-                    key={st}
-                    disabled={updatingId === selectedOrder.id}
-                    onClick={() => handleUpdateStatus(selectedOrder.id, st)}
-                    className={`py-1.5 border text-center transition ${
-                      selectedOrder.status === st
-                        ? 'border-white bg-white text-black font-bold'
-                        : 'border-[var(--line)] text-[var(--muted)] hover:border-white'
-                    }`}
-                  >
-                    {st}
-                  </button>
-                ))}
+              {/* Status Update Actions */}
+              <div className="space-y-2">
+                <span className="text-[10px] text-[var(--subtle)] uppercase">Change Status:</span>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {(['CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'] as OrderStatus[]).map(st => (
+                    <button
+                      key={st}
+                      onClick={() => handleStatusChange(selectedOrder.id, st)}
+                      disabled={updatingStatus || selectedOrder.status === st}
+                      className={`py-1.5 px-2 border text-[11px] transition text-center ${
+                        selectedOrder.status === st
+                          ? 'border-white bg-white text-black font-bold'
+                          : 'border-[var(--line)] text-[var(--muted)] hover:border-white hover:text-white'
+                      }`}
+                    >
+                      {st}
+                    </button>
+                  ))}
+                </div>
               </div>
+
+              {/* Customer Details */}
+              <div className="p-3 border border-[var(--line)] bg-[var(--input-bg)] space-y-2">
+                <span className="text-[10px] text-[var(--subtle)] block uppercase">Shipping Recipient</span>
+                <div className="space-y-1">
+                  <p className="text-white font-bold">{selectedOrder.customerName}</p>
+                  <p className="text-[var(--muted)]">Phone: {selectedOrder.customerPhone}</p>
+                  <p className="text-[var(--muted)] leading-relaxed">
+                    Address: {selectedOrder.customerAddress}
+                  </p>
+                  {selectedOrder.notes && (
+                    <p className="text-[11px] text-[var(--accent-purple)] pt-1 border-t border-[var(--line)]">
+                      Notes: {selectedOrder.notes}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Items List */}
+              <div className="space-y-2">
+                <span className="text-[10px] text-[var(--subtle)] uppercase">Order Items:</span>
+                <div className="border border-[var(--line)] divide-y divide-[var(--line)]">
+                  {selectedOrder.items.map((item, idx) => (
+                    <div key={idx} className="p-2.5 flex justify-between items-center">
+                      <div className="min-w-0 pr-2">
+                        <p className="text-white font-bold truncate">{item.productName}</p>
+                        <p className="text-[10px] text-[var(--subtle)]">Qty: {item.quantity} × ${item.unitPrice.toFixed(2)}</p>
+                      </div>
+                      <span className="font-bold text-white flex-shrink-0">
+                        ${item.totalPrice.toFixed(2)}
+                      </span>
+                    </div>
+                  ))}
+                  <div className="p-3 bg-[var(--card-bg-subtle)] flex justify-between items-center font-bold">
+                    <span>Total Amount:</span>
+                    <span className="text-sm text-white">${selectedOrder.totalAmount.toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Timestamp */}
+              <div className="text-[10px] text-[var(--subtle)] pt-2 border-t border-[var(--line)] flex justify-between">
+                <span>Created: {new Date(selectedOrder.createdAt).toLocaleString()}</span>
+                <span>Payment: {selectedOrder.paymentMethod}</span>
+              </div>
+
             </div>
-
-            <button
-              onClick={() => setSelectedOrder(null)}
-              className="w-full py-2 border border-[var(--line)] text-[var(--muted)] hover:text-white hover:border-white text-xs font-bold transition"
-            >
-              CLOSE
-            </button>
-
-          </div>
+          ) : (
+            <div className="p-12 text-center text-xs font-mono text-[var(--subtle)]">
+              Select an order on the left to view customer details and update delivery status.
+            </div>
+          )}
         </div>
-      )}
+
+      </div>
 
     </div>
   );

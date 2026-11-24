@@ -4,13 +4,17 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
-import { ShoppingBag, Send, MessageSquare, LayoutDashboard, Smartphone, Sparkles, ArrowUpRight } from 'lucide-react';
+import { ShoppingBag, Send, ArrowUpRight, Smartphone } from 'lucide-react';
 
 export default function Navbar() {
   const pathname = usePathname();
   const { totalItems, setIsCartOpen } = useCart();
   const botUsername = (process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || 'nova123456789_bot').replace(/^@/, '');
-  const waPhone = (process.env.NEXT_PUBLIC_WHATSAPP_PHONE || '85599944923').replace(/[^0-9]/g, '');
+
+  // Hide the desktop navbar completely inside Telegram Mini App
+  if (pathname === '/telegram-app') {
+    return null;
+  }
 
   const navLinks = [
     { href: '/', label: 'Catalog' },
@@ -59,27 +63,26 @@ export default function Navbar() {
 
         {/* Right Actions */}
         <div className="flex items-center gap-3">
+          {/* Mini App launch shortcut */}
+          <Link
+            href="/telegram-app"
+            className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-mono font-medium border border-[var(--line)] bg-[var(--card-bg-subtle)] text-[var(--muted)] hover:text-white hover:border-[var(--line-strong)] transition"
+          >
+            <Smartphone className="w-3 h-3 text-sky-400" />
+            <span>Mini App</span>
+          </Link>
+
           {/* Live Telegram Bot status pill */}
           <a
             href={`https://t.me/${botUsername}`}
             target="_blank"
             rel="noreferrer"
-            className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-mono font-medium border border-[var(--line)] bg-[var(--card-bg-subtle)] text-[var(--muted)] hover:text-white hover:border-[var(--line-strong)] transition"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-mono font-medium border border-[var(--line)] bg-[var(--card-bg-subtle)] text-sky-400 hover:text-white hover:border-[var(--line-strong)] transition"
           >
             <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-green)] animate-pulse"></span>
+            <Send className="w-3 h-3" />
             <span>@{botUsername}</span>
             <ArrowUpRight className="w-3 h-3 text-[var(--subtle)]" />
-          </a>
-
-          {/* WhatsApp Direct */}
-          <a
-            href={`https://wa.me/${waPhone}?text=Hello%20NovaMart!%20I%20have%20an%20order%20inquiry`}
-            target="_blank"
-            rel="noreferrer"
-            className="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-mono border border-[var(--line)] bg-[var(--card-bg-subtle)] text-[#25D366] hover:border-[var(--line-strong)] transition"
-          >
-            <MessageSquare className="w-3 h-3" />
-            <span>WA: +{waPhone}</span>
           </a>
 
           {/* Cart Drawer Trigger */}

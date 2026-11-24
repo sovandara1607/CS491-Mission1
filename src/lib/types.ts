@@ -41,7 +41,7 @@ export interface Order {
 export interface BotSession {
   userId: string;
   channel: 'telegram' | 'whatsapp';
-  step: 'IDLE' | 'SELECTING_PRODUCT' | 'ENTERING_QUANTITY' | 'ENTERING_NAME' | 'ENTERING_PHONE' | 'ENTERING_ADDRESS' | 'CONFIRMING_ORDER';
+  step: 'IDLE' | 'SELECTING_PRODUCT' | 'ENTERING_QUANTITY' | 'ENTERING_NAME' | 'ENTERING_PHONE' | 'CHOOSING_LOCATION' | 'ENTERING_ADDRESS' | 'ENTERING_ADDRESS_DETAILS' | 'CONFIRMING_ORDER';
   cart: {
     productId: string;
     productName: string;
