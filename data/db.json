@@ -8,7 +8,14 @@
       "price": 129.99,
       "category": "Audio",
       "image": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80",
-      "stock": 40
+      "stock": 40,
+      "specs": [
+        "Hybrid ANC up to -42dB",
+        "40h battery + USB-C fast charge",
+        "Bluetooth 5.3 Multipoint",
+        "Memory foam earcups (254g)"
+      ],
+      "warranty": "1-Year Official Warranty + 7-Day Replacement"
     },
     {
       "id": "prod-002",
@@ -18,7 +25,14 @@
       "price": 199.5,
       "category": "Wearables",
       "image": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&q=80",
-      "stock": 28
+      "stock": 28,
+      "specs": [
+        "1.92\" LTPO AMOLED (1000 nits)",
+        "Dual-band GPS & Compass",
+        "Heart rate, SpO2 & Sleep tracking",
+        "5ATM 50m Water Resistance"
+      ],
+      "warranty": "1-Year Official Warranty + 7-Day Replacement"
     },
     {
       "id": "prod-003",
@@ -28,7 +42,14 @@
       "price": 89,
       "category": "Accessories",
       "image": "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=800&q=80",
-      "stock": 23
+      "stock": 23,
+      "specs": [
+        "75% Gasket-Mounted Layout",
+        "Hot-Swappable 3/5-pin PCB",
+        "Tri-mode: 2.4GHz / BT 5.2 / USB-C",
+        "4000mAh Battery + South-facing RGB"
+      ],
+      "warranty": "1-Year Official Warranty + 7-Day Replacement"
     },
     {
       "id": "prod-004",
@@ -38,7 +59,14 @@
       "price": 49.99,
       "category": "Accessories",
       "image": "https://images.unsplash.com/photo-1609592426867-b5055b85a3fd?w=800&q=80",
-      "stock": 58
+      "stock": 58,
+      "specs": [
+        "20,000mAh / 74Wh Airline Safe",
+        "65W USB-C PD (MacBook & Laptops)",
+        "Dual USB-C + 1x USB-A QC 3.0",
+        "Smart LED Wattage Readout"
+      ],
+      "warranty": "1-Year Official Warranty + 7-Day Replacement"
     },
     {
       "id": "prod-005",
@@ -48,7 +76,14 @@
       "price": 59,
       "category": "Home & Office",
       "image": "https://images.unsplash.com/photo-1534349762230-e0cadf78f5da?w=800&q=80",
-      "stock": 18
+      "stock": 18,
+      "specs": [
+        "Ra97+ High-CRI Asymmetric Optics",
+        "2700K–6500K Stepless Dimming",
+        "15W Qi Wireless Charging Pad",
+        "Anodized Aluminum Arm"
+      ],
+      "warranty": "1-Year Official Warranty + 7-Day Replacement"
     },
     {
       "id": "prod-006",
@@ -58,7 +93,14 @@
       "price": 74.99,
       "category": "Accessories",
       "image": "https://images.unsplash.com/photo-1616440347437-b1c73416efc2?w=800&q=80",
-      "stock": 33
+      "stock": 33,
+      "specs": [
+        "Dual 4K@60Hz HDMI Output",
+        "100W USB-C PD Passthrough",
+        "1Gbps RJ45 Ethernet + SD/TF 4.0",
+        "3x USB 3.2 Gen 2 (10Gbps)"
+      ],
+      "warranty": "1-Year Official Warranty + 7-Day Replacement"
     }
   ],
   "orders": [
