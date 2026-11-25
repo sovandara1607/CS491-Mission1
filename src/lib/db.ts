@@ -23,7 +23,9 @@ const DEFAULT_PRODUCTS: Product[] = [
     price: 129.99,
     category: 'Audio',
     image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80',
-    stock: 45
+    stock: 45,
+    specs: ['Hybrid ANC up to -42dB', '40h battery + USB-C fast charge', 'Bluetooth 5.3 Multipoint', 'Memory foam earcups (254g)'],
+    warranty: '1-Year Official Warranty + 7-Day Replacement'
   },
   {
     id: 'prod-002',
@@ -33,7 +35,9 @@ const DEFAULT_PRODUCTS: Product[] = [
     price: 199.50,
     category: 'Wearables',
     image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&q=80',
-    stock: 30
+    stock: 30,
+    specs: ['1.92" LTPO AMOLED (1000 nits)', 'Dual-band GPS & Compass', 'Heart rate, SpO2 & Sleep tracking', '5ATM 50m Water Resistance'],
+    warranty: '1-Year Official Warranty + 7-Day Replacement'
   },
   {
     id: 'prod-003',
@@ -43,7 +47,9 @@ const DEFAULT_PRODUCTS: Product[] = [
     price: 89.00,
     category: 'Accessories',
     image: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=800&q=80',
-    stock: 25
+    stock: 25,
+    specs: ['75% Gasket-Mounted Layout', 'Hot-Swappable 3/5-pin PCB', 'Tri-mode: 2.4GHz / BT 5.2 / USB-C', '4000mAh Battery + South-facing RGB'],
+    warranty: '1-Year Official Warranty + 7-Day Replacement'
   },
   {
     id: 'prod-004',
@@ -53,7 +59,9 @@ const DEFAULT_PRODUCTS: Product[] = [
     price: 49.99,
     category: 'Accessories',
     image: 'https://images.unsplash.com/photo-1609592426867-b5055b85a3fd?w=800&q=80',
-    stock: 60
+    stock: 60,
+    specs: ['20,000mAh / 74Wh Airline Safe', '65W USB-C PD (MacBook & Laptops)', 'Dual USB-C + 1x USB-A QC 3.0', 'Smart LED Wattage Readout'],
+    warranty: '1-Year Official Warranty + 7-Day Replacement'
   },
   {
     id: 'prod-005',
@@ -63,7 +71,9 @@ const DEFAULT_PRODUCTS: Product[] = [
     price: 59.00,
     category: 'Home & Office',
     image: 'https://images.unsplash.com/photo-1534349762230-e0cadf78f5da?w=800&q=80',
-    stock: 20
+    stock: 20,
+    specs: ['Ra97+ High-CRI Asymmetric Optics', '2700K–6500K Stepless Dimming', '15W Qi Wireless Charging Pad', 'Anodized Aluminum Arm'],
+    warranty: '1-Year Official Warranty + 7-Day Replacement'
   },
   {
     id: 'prod-006',
@@ -73,9 +83,22 @@ const DEFAULT_PRODUCTS: Product[] = [
     price: 74.99,
     category: 'Accessories',
     image: 'https://images.unsplash.com/photo-1616440347437-b1c73416efc2?w=800&q=80',
-    stock: 35
+    stock: 35,
+    specs: ['Dual 4K@60Hz HDMI Output', '100W USB-C PD Passthrough', '1Gbps RJ45 Ethernet + SD/TF 4.0', '3x USB 3.2 Gen 2 (10Gbps)'],
+    warranty: '1-Year Official Warranty + 7-Day Replacement'
   }
 ];
+
+function hydrateProductMetadata(products: Product[]): Product[] {
+  return products.map(p => {
+    const def = DEFAULT_PRODUCTS.find(d => d.id === p.id);
+    return {
+      ...p,
+      specs: p.specs || def?.specs || [],
+      warranty: p.warranty || def?.warranty || '1-Year Official Warranty'
+    };
+  });
+}
 
 // In-memory cache to guarantee fast response and fail-safe writes
 let inMemoryDb: DatabaseSchema | null = null;
@@ -86,27 +109,27 @@ function initDb(): DatabaseSchema {
   }
 
   try {
-    // Check if writable DB exists
     if (fs.existsSync(DB_FILE)) {
       const raw = fs.readFileSync(DB_FILE, 'utf-8');
-      inMemoryDb = JSON.parse(raw);
-      return inMemoryDb!;
+      const parsed = JSON.parse(raw) as DatabaseSchema;
+      parsed.products = hydrateProductMetadata(parsed.products || DEFAULT_PRODUCTS);
+      inMemoryDb = parsed;
+      return inMemoryDb;
     }
 
-    // Check if bundled db.json exists to seed from
     if (fs.existsSync(BUNDLED_DB_FILE)) {
       try {
         const bundledRaw = fs.readFileSync(BUNDLED_DB_FILE, 'utf-8');
-        const bundledData = JSON.parse(bundledRaw);
+        const bundledData = JSON.parse(bundledRaw) as DatabaseSchema;
+        bundledData.products = hydrateProductMetadata(bundledData.products || DEFAULT_PRODUCTS);
         inMemoryDb = bundledData;
         saveDb(bundledData);
-        return inMemoryDb!;
+        return inMemoryDb;
       } catch (err) {
         console.warn('Could not read bundled db file:', err);
       }
     }
 
-    // Initialize clean database
     const initialData: DatabaseSchema = {
       products: DEFAULT_PRODUCTS,
       orders: [],
@@ -134,7 +157,6 @@ function saveDb(data: DatabaseSchema): void {
     }
     fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
   } catch (err) {
-    // In serverless environments, file write errors are non-fatal because in-memory is updated
     console.warn('Filesystem save warning (continuing with in-memory):', err);
   }
 }
@@ -173,7 +195,6 @@ export function createOrder(orderData: Omit<Order, 'id' | 'createdAt' | 'updated
 
   db.orders.unshift(newOrder);
 
-  // Decrement stock
   for (const item of newOrder.items) {
     const product = db.products.find(p => p.id === item.productId);
     if (product) {
@@ -187,7 +208,7 @@ export function createOrder(orderData: Omit<Order, 'id' | 'createdAt' | 'updated
 
 export function updateOrderStatus(orderId: string, status: OrderStatus): Order | null {
   const db = initDb();
-  const order = db.orders.find(o => o.id === orderId);
+  const order = db.orders.find(o => o.id.toLowerCase() === orderId.toLowerCase());
   if (!order) return null;
 
   order.status = status;

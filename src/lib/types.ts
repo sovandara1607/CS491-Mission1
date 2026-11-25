@@ -1,12 +1,14 @@
 export interface Product {
   id: string;
+  sku: string;
   name: string;
   description: string;
   price: number;
   category: string;
   image: string;
   stock: number;
-  sku: string;
+  specs?: string[];
+  warranty?: string;
 }
 
 export interface OrderItem {
@@ -17,9 +19,9 @@ export interface OrderItem {
   totalPrice: number;
 }
 
-export type OrderChannel = 'web' | 'telegram' | 'whatsapp';
-
 export type OrderStatus = 'PENDING' | 'CONFIRMED' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
+
+export type OrderChannel = 'web' | 'telegram' | 'whatsapp';
 
 export interface Order {
   id: string;
@@ -41,7 +43,17 @@ export interface Order {
 export interface BotSession {
   userId: string;
   channel: 'telegram' | 'whatsapp';
-  step: 'IDLE' | 'SELECTING_PRODUCT' | 'ENTERING_QUANTITY' | 'ENTERING_NAME' | 'ENTERING_PHONE' | 'CHOOSING_LOCATION' | 'ENTERING_ADDRESS' | 'ENTERING_ADDRESS_DETAILS' | 'CONFIRMING_ORDER';
+  step:
+    | 'IDLE'
+    | 'SELECTING_PRODUCT'
+    | 'ENTERING_QUANTITY'
+    | 'ENTERING_NAME'
+    | 'ENTERING_PHONE'
+    | 'CHOOSING_LOCATION'
+    | 'ENTERING_ADDRESS'
+    | 'ENTERING_ADDRESS_DETAILS'
+    | 'CHOOSING_PAYMENT'
+    | 'CONFIRMING_ORDER';
   cart: {
     productId: string;
     productName: string;
@@ -52,5 +64,6 @@ export interface BotSession {
   customerName?: string;
   customerPhone?: string;
   customerAddress?: string;
+  paymentMethod?: 'COD' | 'BANK_TRANSFER';
   updatedAt: number;
 }

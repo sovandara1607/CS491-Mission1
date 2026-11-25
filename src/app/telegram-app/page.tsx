@@ -1,26 +1,24 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Script from 'next/script';
 import { Product, Order } from '@/lib/types';
-import { 
-  ShoppingBag, 
-  ArrowLeft, 
-  Minus, 
-  Plus, 
-  ArrowRight, 
-  ShieldCheck, 
-  Search, 
-  Trash2, 
-  CheckCircle2, 
-  Clock, 
-  Truck, 
-  Package, 
-  Sparkles,
+import KhqrCard from '@/components/KhqrCard';
+import {
+  Minus,
+  Plus,
+  ArrowRight,
+  ShieldCheck,
+  Search,
+  Truck,
   MapPin,
   RefreshCw,
-  X
+  X,
+  Info,
+  Clock
 } from 'lucide-react';
+
+const SAVED_ORDERS_KEY = 'novamart_tma_order_ids';
 
 export default function TelegramMiniApp() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -29,25 +27,29 @@ export default function TelegramMiniApp() {
   const [activeTab, setActiveTab] = useState<'store' | 'cart' | 'track'>('store');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
-  
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
   // Telegram User & Checkout Form State
   const [tgUser, setTgUser] = useState<any>(null);
+  const [isNativeTg, setIsNativeTg] = useState(false);
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [deliveryRegion, setDeliveryRegion] = useState<'phnom_penh' | 'province'>('phnom_penh');
   const [customerAddress, setCustomerAddress] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'COD' | 'KHQR'>('COD');
-  
+  const [formError, setFormError] = useState('');
+
   // Order result & tracking state
   const [createdOrder, setCreatedOrder] = useState<Order | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [trackOrderId, setTrackOrderId] = useState('');
   const [trackedOrder, setTrackedOrder] = useState<Order | null>(null);
+  const [savedOrderIds, setSavedOrderIds] = useState<string[]>([]);
+  const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [trackingLoading, setTrackingLoading] = useState(false);
   const [trackError, setTrackError] = useState('');
 
-  // Trigger Telegram Haptic Feedback safely
-  const triggerHaptic = (type: 'light' | 'medium' | 'heavy' | 'success' | 'error' = 'light') => {
+  const triggerHaptic = useCallback((type: 'light' | 'medium' | 'heavy' | 'success' | 'error' = 'light') => {
     if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp?.HapticFeedback) {
       try {
         const haptic = (window as any).Telegram.WebApp.HapticFeedback;
@@ -56,32 +58,82 @@ export default function TelegramMiniApp() {
         } else {
           haptic.impactOccurred(type);
         }
-      } catch (e) {
+      } catch {
         // ignore
       }
     }
-  };
+  }, []);
+
+  const loadRecentOrders = useCallback(async (ids: string[]) => {
+    if (!ids.length) {
+      setRecentOrders([]);
+      return;
+    }
+    try {
+      const res = await fetch('/api/orders', { cache: 'no-store' });
+      const data = await res.json();
+      if (data.success && Array.isArray(data.orders)) {
+        const matched = data.orders.filter((o: Order) =>
+          ids.some(id => id.toLowerCase() === o.id.toLowerCase())
+        );
+        setRecentOrders(matched);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
 
   useEffect(() => {
-    // Initialize Telegram WebApp SDK
-    if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp) {
-      const tg = (window as any).Telegram.WebApp;
-      tg.ready();
-      tg.expand();
-      try {
-        tg.enableClosingConfirmation?.();
-      } catch (e) {}
+    // Check URL tab param (e.g. ?tab=track)
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab');
+      if (tabParam === 'track' || tabParam === 'cart' || tabParam === 'store') {
+        setActiveTab(tabParam);
+      }
 
-      if (tg.initDataUnsafe?.user) {
-        const u = tg.initDataUnsafe.user;
-        setTgUser(u);
-        const fullName = [u.first_name, u.last_name].filter(Boolean).join(' ');
-        if (fullName) setCustomerName(fullName);
+      // Load saved order history IDs
+      try {
+        const raw = localStorage.getItem(SAVED_ORDERS_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw) as string[];
+          if (Array.isArray(parsed)) {
+            setSavedOrderIds(parsed);
+            loadRecentOrders(parsed);
+          }
+        }
+      } catch {
+        // ignore
+      }
+
+      // Initialize Telegram WebApp SDK
+      if ((window as any).Telegram?.WebApp) {
+        const tg = (window as any).Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+        try {
+          tg.enableClosingConfirmation?.();
+          tg.setHeaderColor?.('#0c0d12');
+          tg.setBackgroundColor?.('#0c0d12');
+        } catch {
+          // ignore
+        }
+
+        if (tg.initData && tg.initData.length > 0) {
+          setIsNativeTg(true);
+        }
+
+        if (tg.initDataUnsafe?.user) {
+          const u = tg.initDataUnsafe.user;
+          setTgUser(u);
+          const fullName = [u.first_name, u.last_name].filter(Boolean).join(' ');
+          if (fullName) setCustomerName(fullName);
+        }
       }
     }
 
-    // Fetch Products
-    fetch('/api/products')
+    // Fetch Live Products
+    fetch('/api/products', { cache: 'no-store' })
       .then(res => res.json())
       .then(data => {
         if (data.success) {
@@ -90,7 +142,70 @@ export default function TelegramMiniApp() {
       })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+  }, [loadRecentOrders]);
+
+  const totalAmount = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  // Sync Telegram Native BackButton
+  useEffect(() => {
+    if (typeof window === 'undefined' || !(window as any).Telegram?.WebApp?.BackButton) return;
+    const backBtn = (window as any).Telegram.WebApp.BackButton;
+    const handleBack = () => {
+      triggerHaptic('light');
+      if (selectedProduct) {
+        setSelectedProduct(null);
+      } else if (activeTab !== 'store') {
+        setActiveTab('store');
+      }
+    };
+
+    if (selectedProduct || activeTab !== 'store') {
+      backBtn.show();
+      backBtn.onClick(handleBack);
+    } else {
+      backBtn.hide();
+    }
+
+    return () => {
+      try {
+        backBtn.offClick(handleBack);
+      } catch {
+        // ignore
+      }
+    };
+  }, [selectedProduct, activeTab, triggerHaptic]);
+
+  // Sync Telegram Native MainButton on Store tab when inside Telegram
+  useEffect(() => {
+    if (!isNativeTg || typeof window === 'undefined' || !(window as any).Telegram?.WebApp?.MainButton) return;
+    const mainBtn = (window as any).Telegram.WebApp.MainButton;
+    const handleGoCheckout = () => {
+      triggerHaptic('medium');
+      setSelectedProduct(null);
+      setActiveTab('cart');
+    };
+
+    if (activeTab === 'store' && cart.length > 0) {
+      mainBtn.setParams({
+        text: `CHECKOUT (${totalItems}) • $${totalAmount.toFixed(2)}`,
+        color: '#ffffff',
+        text_color: '#000000'
+      });
+      mainBtn.show();
+      mainBtn.onClick(handleGoCheckout);
+    } else {
+      mainBtn.hide();
+    }
+
+    return () => {
+      try {
+        mainBtn.offClick(handleGoCheckout);
+      } catch {
+        // ignore
+      }
+    };
+  }, [isNativeTg, activeTab, cart.length, totalItems, totalAmount, triggerHaptic]);
 
   const categories = useMemo(() => {
     return ['All', ...Array.from(new Set(products.map(p => p.category)))];
@@ -99,7 +214,7 @@ export default function TelegramMiniApp() {
   const filteredProducts = useMemo(() => {
     return products.filter(p => {
       const matchCat = selectedCategory === 'All' || p.category === selectedCategory;
-      const matchSearch = 
+      const matchSearch =
         p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.sku.toLowerCase().includes(searchQuery.toLowerCase());
@@ -112,7 +227,7 @@ export default function TelegramMiniApp() {
     setCart(prev => {
       const existing = prev.find(i => i.product.id === product.id);
       if (existing) {
-        return prev.map(i => i.product.id === product.id ? { ...i, quantity: i.quantity + 1 } : i);
+        return prev.map(i => (i.product.id === product.id ? { ...i, quantity: i.quantity + 1 } : i));
       }
       return [...prev, { product, quantity: 1 }];
     });
@@ -133,13 +248,23 @@ export default function TelegramMiniApp() {
     });
   };
 
-  const totalAmount = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
-  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const saveOrderIdLocally = (orderId: string) => {
+    const next = [orderId, ...savedOrderIds.filter(id => id !== orderId)].slice(0, 10);
+    setSavedOrderIds(next);
+    try {
+      localStorage.setItem(SAVED_ORDERS_KEY, JSON.stringify(next));
+    } catch {
+      // ignore
+    }
+    loadRecentOrders(next);
+  };
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError('');
     if (!customerName.trim() || !customerPhone.trim() || !customerAddress.trim()) {
-      alert('Please fill in your recipient name, phone number, and delivery address.');
+      setFormError('Please fill in your name, phone number, and delivery address.');
+      triggerHaptic('error');
       return;
     }
 
@@ -167,8 +292,9 @@ export default function TelegramMiniApp() {
           items: orderItems,
           totalAmount,
           channel: 'telegram',
+          channelUserId: tgUser?.id ? String(tgUser.id) : undefined,
           paymentMethod: paymentMethod === 'COD' ? 'COD' : 'BANK_TRANSFER',
-          notes: `Placed via Telegram Mini App. User: ${tgUser?.username ? `@${tgUser.username}` : tgUser?.first_name || 'Telegram User'}`
+          notes: `Placed via Telegram Mini App. User: ${tgUser?.username ? `@${tgUser.username}` : tgUser?.first_name || 'Browser Preview'}`
         })
       });
 
@@ -176,61 +302,64 @@ export default function TelegramMiniApp() {
       if (data.success) {
         setCreatedOrder(data.order);
         setTrackOrderId(data.order.id);
+        saveOrderIdLocally(data.order.id);
         setCart([]);
         triggerHaptic('success');
 
-        // Notify Telegram WebApp
         if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp) {
           try {
-            (window as any).Telegram.WebApp.sendData(JSON.stringify({
-              action: 'ORDER_PLACED',
-              orderId: data.order.id,
-              total: data.order.totalAmount
-            }));
-          } catch (e) {
+            (window as any).Telegram.WebApp.sendData(
+              JSON.stringify({
+                action: 'ORDER_PLACED',
+                orderId: data.order.id,
+                total: data.order.totalAmount
+              })
+            );
+          } catch {
             // ignore
           }
         }
       } else {
         triggerHaptic('error');
-        alert('Order placement failed: ' + (data.error || 'Please try again'));
+        setFormError(data.error || 'Order placement failed. Please try again.');
       }
     } catch (err) {
       console.error(err);
       triggerHaptic('error');
-      alert('Network error placing order');
+      setFormError('Network error placing order. Please try again.');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleSearchOrder = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!trackOrderId.trim()) return;
-
+  const lookupOrderById = async (idToFind: string) => {
+    if (!idToFind.trim()) return;
     setTrackingLoading(true);
     setTrackError('');
     setTrackedOrder(null);
     triggerHaptic('light');
 
     try {
-      const res = await fetch('/api/orders');
+      const res = await fetch(`/api/orders/${encodeURIComponent(idToFind.trim())}`, { cache: 'no-store' });
       const data = await res.json();
-      if (data.success && data.orders) {
-        const found = data.orders.find((o: Order) => o.id.toLowerCase() === trackOrderId.trim().toLowerCase());
-        if (found) {
-          setTrackedOrder(found);
-          triggerHaptic('success');
-        } else {
-          setTrackError(`Order "${trackOrderId.trim()}" was not found.`);
-          triggerHaptic('error');
-        }
+      if (data.success && data.order) {
+        setTrackedOrder(data.order);
+        setTrackOrderId(data.order.id);
+        triggerHaptic('success');
+      } else {
+        setTrackError(`Order "${idToFind.trim()}" was not found.`);
+        triggerHaptic('error');
       }
-    } catch (err) {
-      setTrackError('Failed to fetch order status. Please check your connection.');
+    } catch {
+      setTrackError('Failed to fetch order status. Check your connection.');
     } finally {
       setTrackingLoading(false);
     }
+  };
+
+  const handleSearchOrder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await lookupOrderById(trackOrderId);
   };
 
   const getStatusProgress = (status: string) => {
@@ -245,11 +374,7 @@ export default function TelegramMiniApp() {
 
   return (
     <>
-      {/* Inject Telegram WebApp SDK Script */}
-      <Script 
-        src="https://telegram.org/js/telegram-web-app.js" 
-        strategy="beforeInteractive" 
-      />
+      <Script src="https://telegram.org/js/telegram-web-app.js" strategy="beforeInteractive" />
 
       <div className="min-h-screen bg-[#0c0d12] flex justify-center text-white font-sans select-none antialiased">
         <div className="w-full max-w-md bg-[#12141b] border-x border-[var(--line)] min-h-screen flex flex-col shadow-2xl relative">
@@ -272,11 +397,10 @@ export default function TelegramMiniApp() {
               </div>
             </div>
 
-            {/* Telegram User Indicator */}
             <div className="flex items-center gap-2">
               {tgUser ? (
-                <div className="px-2 py-0.5 border border-sky-400/30 bg-sky-950/20 text-sky-400 text-[10px] font-mono flex items-center gap-1">
-                  <span>@{tgUser.username || tgUser.first_name}</span>
+                <div className="px-2 py-0.5 border border-sky-400/30 bg-sky-950/20 text-sky-400 text-[10px] font-mono">
+                  @{tgUser.username || tgUser.first_name}
                 </div>
               ) : (
                 <span className="px-2 py-0.5 border border-[var(--line)] bg-[var(--card-bg-subtle)] text-[10px] font-mono text-[var(--muted)]">
@@ -325,6 +449,7 @@ export default function TelegramMiniApp() {
               onClick={() => {
                 triggerHaptic('light');
                 setActiveTab('track');
+                loadRecentOrders(savedOrderIds);
               }}
               className={`py-2.5 border-b-2 text-center transition flex items-center justify-center gap-1.5 ${
                 activeTab === 'track'
@@ -333,6 +458,9 @@ export default function TelegramMiniApp() {
               }`}
             >
               <span>🔍 Track</span>
+              {recentOrders.length > 0 && (
+                <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />
+              )}
             </button>
           </div>
 
@@ -404,30 +532,46 @@ export default function TelegramMiniApp() {
                           key={p.id}
                           className="p-3 border border-[var(--line)] bg-[var(--card-bg)] hover:border-[var(--line-strong)] transition flex gap-3 items-center"
                         >
-                          {/* Image */}
-                          <div className="relative w-16 h-16 flex-shrink-0 bg-black/50 border border-[var(--line)] overflow-hidden">
-                            <img
-                              src={p.image}
-                              alt={p.name}
-                              className="w-full h-full object-cover"
-                            />
+                          {/* Image (Tap to inspect specs) */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              triggerHaptic('light');
+                              setSelectedProduct(p);
+                            }}
+                            className="relative w-16 h-16 flex-shrink-0 bg-black/50 border border-[var(--line)] overflow-hidden text-left"
+                          >
+                            <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
                             <span className="absolute bottom-0 right-0 bg-black/80 text-[8px] font-mono px-1 text-[var(--accent-purple)]">
                               {p.category}
                             </span>
-                          </div>
+                          </button>
 
-                          {/* Info */}
-                          <div className="flex-1 min-w-0 space-y-0.5">
-                            <div className="flex items-center justify-between">
+                          {/* Info (Tap to inspect specs) */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              triggerHaptic('light');
+                              setSelectedProduct(p);
+                            }}
+                            className="flex-1 min-w-0 space-y-0.5 text-left"
+                          >
+                            <div className="flex items-center justify-between gap-2">
                               <span className="text-[9px] font-mono text-[var(--subtle)]">{p.sku}</span>
                               <span className="text-xs font-mono font-bold text-white">${p.price.toFixed(2)}</span>
                             </div>
                             <h3 className="text-xs font-bold text-white truncate">{p.name}</h3>
                             <p className="text-[10px] text-[var(--muted)] line-clamp-1">{p.description}</p>
-                            <span className="inline-block text-[9px] font-mono text-[var(--accent-green)]">
-                              ● {p.stock > 0 ? `In Stock (${p.stock})` : 'Sold out'}
-                            </span>
-                          </div>
+                            <div className="flex items-center gap-2 text-[9px] font-mono">
+                              <span className="text-[var(--accent-green)]">
+                                ● {p.stock > 0 ? `In Stock (${p.stock})` : 'Sold out'}
+                              </span>
+                              <span className="text-[var(--subtle)] inline-flex items-center gap-0.5">
+                                <Info className="w-2.5 h-2.5" />
+                                Specs
+                              </span>
+                            </div>
+                          </button>
 
                           {/* Action Controller */}
                           <div className="flex-shrink-0">
@@ -476,8 +620,7 @@ export default function TelegramMiniApp() {
               <div className="space-y-4">
                 
                 {createdOrder ? (
-                  /* Order Success Confirmation */
-                  <div className="p-6 border border-[var(--line)] bg-[var(--card-bg)] text-center space-y-4 my-6">
+                  <div className="p-5 border border-[var(--line)] bg-[var(--card-bg)] text-center space-y-4 my-2">
                     <div className="w-12 h-12 bg-white text-black flex items-center justify-center mx-auto font-bold font-mono text-xl">
                       ✓
                     </div>
@@ -503,15 +646,25 @@ export default function TelegramMiniApp() {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-[var(--subtle)]">Payment:</span>
-                        <span className="text-[var(--accent-green)] font-semibold">Cash on Delivery</span>
+                        <span className="text-[var(--accent-green)] font-semibold">
+                          {createdOrder.paymentMethod === 'BANK_TRANSFER' ? 'ABA KHQR' : 'Cash on Delivery'}
+                        </span>
                       </div>
                       <div className="text-[11px] text-[var(--muted)] pt-1 border-t border-[var(--line)] leading-relaxed">
                         Address: {createdOrder.customerAddress}
                       </div>
                     </div>
 
+                    {createdOrder.paymentMethod === 'BANK_TRANSFER' && (
+                      <div className="text-left">
+                        <KhqrCard amountUsd={createdOrder.totalAmount} orderRef={createdOrder.id} />
+                      </div>
+                    )}
+
                     <p className="text-xs text-[var(--muted)] leading-relaxed">
-                      Our dispatch team will contact your phone before courier arrival.
+                      {tgUser
+                        ? 'A receipt has been sent to your Telegram chat. You will receive live shipping updates automatically.'
+                        : 'Our dispatch team will contact your phone before courier arrival.'}
                     </p>
 
                     <div className="space-y-2 pt-2">
@@ -539,7 +692,6 @@ export default function TelegramMiniApp() {
                     </div>
                   </div>
                 ) : cart.length === 0 ? (
-                  /* Empty Cart */
                   <div className="p-12 border border-[var(--line)] bg-[var(--card-bg)] text-center space-y-3 my-8">
                     <p className="text-xs font-mono text-[var(--subtle)]">[ YOUR_CART_IS_EMPTY ]</p>
                     <p className="text-xs text-[var(--muted)]">Browse our store and pick high-grade hardware to add to your cart.</p>
@@ -554,10 +706,8 @@ export default function TelegramMiniApp() {
                     </button>
                   </div>
                 ) : (
-                  /* Cart Items & Checkout Form */
                   <div className="space-y-5">
                     
-                    {/* Items Header */}
                     <div className="flex items-center justify-between pb-2 border-b border-[var(--line)]">
                       <span className="text-xs font-mono font-bold text-white">Your Items ({totalItems})</span>
                       <button
@@ -571,7 +721,6 @@ export default function TelegramMiniApp() {
                       </button>
                     </div>
 
-                    {/* Items List */}
                     <div className="border border-[var(--line)] bg-[var(--card-bg)] divide-y divide-[var(--line)] text-xs">
                       {cart.map(item => (
                         <div key={item.product.id} className="p-3 flex items-center justify-between gap-3">
@@ -604,7 +753,6 @@ export default function TelegramMiniApp() {
                         </div>
                       ))}
 
-                      {/* Summary Row */}
                       <div className="p-3 bg-[var(--card-bg-subtle)] space-y-1 font-mono text-xs">
                         <div className="flex justify-between text-[var(--muted)]">
                           <span>Subtotal:</span>
@@ -628,7 +776,12 @@ export default function TelegramMiniApp() {
                         <span>Delivery Destination</span>
                       </div>
 
-                      {/* Region Selector */}
+                      {formError && (
+                        <div className="p-2.5 border border-rose-500/40 bg-rose-950/30 text-rose-300 text-xs font-mono">
+                          {formError}
+                        </div>
+                      )}
+
                       <div className="grid grid-cols-2 gap-2 text-xs font-mono">
                         <button
                           type="button"
@@ -663,7 +816,6 @@ export default function TelegramMiniApp() {
                         </button>
                       </div>
 
-                      {/* Name Field */}
                       <div>
                         <label className="block text-[10px] font-mono text-[var(--subtle)] uppercase mb-1">
                           Full Name
@@ -678,7 +830,6 @@ export default function TelegramMiniApp() {
                         />
                       </div>
 
-                      {/* Phone Field */}
                       <div>
                         <label className="block text-[10px] font-mono text-[var(--subtle)] uppercase mb-1">
                           Phone Number (for Courier Dispatch)
@@ -693,7 +844,6 @@ export default function TelegramMiniApp() {
                         />
                       </div>
 
-                      {/* Street Address */}
                       <div>
                         <label className="block text-[10px] font-mono text-[var(--subtle)] uppercase mb-1">
                           {deliveryRegion === 'phnom_penh' ? 'Street, Sangkat, Khan / Landmark' : 'Province, District, & Nearest Branch'}
@@ -708,7 +858,6 @@ export default function TelegramMiniApp() {
                         />
                       </div>
 
-                      {/* Payment Method Selector */}
                       <div>
                         <label className="block text-[10px] font-mono text-[var(--subtle)] uppercase mb-1">
                           Payment Option
@@ -743,12 +892,13 @@ export default function TelegramMiniApp() {
                             }`}
                           >
                             <span className="block text-white">📱 ABA KHQR</span>
-                            <span className="text-[10px] text-[var(--subtle)]">Scan upon receipt</span>
+                            <span className="text-[10px] text-[var(--subtle)]">Scan via Bakong / ABA</span>
                           </button>
                         </div>
                       </div>
 
-                      {/* Submit Order Button */}
+                      {paymentMethod === 'KHQR' && <KhqrCard amountUsd={totalAmount} />}
+
                       <button
                         type="submit"
                         disabled={submitting}
@@ -773,7 +923,7 @@ export default function TelegramMiniApp() {
                     <span>Real-time Parcel Tracking</span>
                   </h3>
                   <p className="text-[11px] text-[var(--muted)]">
-                    Enter your Order ID (e.g. <span className="font-mono text-white">ORD-23358</span>) to check status.
+                    Enter your Order ID (e.g. <span className="font-mono text-white">ORD-23358</span>) or tap a recent order below.
                   </p>
                 </div>
 
@@ -791,7 +941,7 @@ export default function TelegramMiniApp() {
                     disabled={trackingLoading || !trackOrderId.trim()}
                     className="px-4 py-2 bg-white text-black font-mono font-bold text-xs hover:bg-slate-200 transition disabled:opacity-50"
                   >
-                    {trackingLoading ? 'Searching...' : 'Track'}
+                    {trackingLoading ? '...' : 'Track'}
                   </button>
                 </form>
 
@@ -804,21 +954,29 @@ export default function TelegramMiniApp() {
                 {trackedOrder && (
                   <div className="p-4 border border-[var(--line)] bg-[var(--card-bg)] space-y-4">
                     
-                    {/* Header */}
                     <div className="flex items-center justify-between pb-3 border-b border-[var(--line)]">
                       <div>
                         <span className="text-[10px] font-mono text-[var(--subtle)]">ORDER ID</span>
                         <h4 className="text-sm font-bold font-mono text-white">#{trackedOrder.id}</h4>
                       </div>
-                      <span className="px-2 py-0.5 border border-sky-400/30 bg-sky-950/20 text-sky-400 text-xs font-mono font-bold">
-                        {trackedOrder.status}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 border border-sky-400/30 bg-sky-950/20 text-sky-400 text-xs font-mono font-bold">
+                          {trackedOrder.status}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => lookupOrderById(trackedOrder.id)}
+                          className="p-1 border border-[var(--line)] hover:border-white text-[var(--muted)] hover:text-white transition"
+                          aria-label="Refresh status"
+                        >
+                          <RefreshCw className={`w-3.5 h-3.5 ${trackingLoading ? 'animate-spin' : ''}`} />
+                        </button>
+                      </div>
                     </div>
 
-                    {/* Progress Bar */}
                     <div className="space-y-1.5">
                       <div className="w-full bg-[#0c0d12] border border-[var(--line)] h-2 overflow-hidden">
-                        <div 
+                        <div
                           className="bg-white h-full transition-all duration-500"
                           style={{ width: `${getStatusProgress(trackedOrder.status)}%` }}
                         />
@@ -831,7 +989,6 @@ export default function TelegramMiniApp() {
                       </div>
                     </div>
 
-                    {/* Details Table */}
                     <div className="p-3 border border-[var(--line)] bg-[var(--input-bg)] text-xs font-mono space-y-1.5">
                       <div className="flex justify-between">
                         <span className="text-[var(--subtle)]">Recipient:</span>
@@ -843,14 +1000,15 @@ export default function TelegramMiniApp() {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-[var(--subtle)]">Total Amount:</span>
-                        <span className="text-white font-bold">${trackedOrder.totalAmount.toFixed(2)} ({trackedOrder.paymentMethod})</span>
+                        <span className="text-white font-bold">
+                          ${trackedOrder.totalAmount.toFixed(2)} ({trackedOrder.paymentMethod === 'BANK_TRANSFER' ? 'KHQR' : 'COD'})
+                        </span>
                       </div>
                       <div className="text-[11px] text-[var(--muted)] pt-1 border-t border-[var(--line)]">
                         Destination: {trackedOrder.customerAddress}
                       </div>
                     </div>
 
-                    {/* Items List */}
                     <div className="space-y-1.5 pt-1">
                       <span className="text-[10px] font-mono text-[var(--subtle)] uppercase">Items:</span>
                       <div className="divide-y divide-[var(--line)] border border-[var(--line)] text-xs">
@@ -866,13 +1024,141 @@ export default function TelegramMiniApp() {
                   </div>
                 )}
 
+                {/* Auto-Saved Recent Orders on this device */}
+                {recentOrders.length > 0 && (
+                  <div className="space-y-2 pt-2">
+                    <div className="flex items-center justify-between">
+                      <span className="kk-tag flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        <span>YOUR RECENT ORDERS</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => loadRecentOrders(savedOrderIds)}
+                        className="text-[10px] font-mono text-[var(--muted)] hover:text-white"
+                      >
+                        Refresh
+                      </button>
+                    </div>
+
+                    <div className="border border-[var(--line)] bg-[var(--card-bg)] divide-y divide-[var(--line)]">
+                      {recentOrders.map(ord => (
+                        <button
+                          key={ord.id}
+                          type="button"
+                          onClick={() => {
+                            triggerHaptic('light');
+                            setTrackedOrder(ord);
+                            setTrackOrderId(ord.id);
+                          }}
+                          className="w-full p-3 text-left hover:bg-white/5 transition flex items-center justify-between gap-2"
+                        >
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono font-bold text-xs text-white">#{ord.id}</span>
+                              <span className="text-[10px] font-mono text-sky-400">{ord.status}</span>
+                            </div>
+                            <p className="text-[10px] text-[var(--subtle)] font-mono truncate mt-0.5">
+                              {ord.items.map(i => `${i.productName} (x${i.quantity})`).join(', ')}
+                            </p>
+                          </div>
+                          <span className="font-mono font-bold text-xs text-white flex-shrink-0">
+                            ${ord.totalAmount.toFixed(2)}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
               </div>
             )}
 
           </div>
 
-          {/* Sticky Quick Cart Bottom Bar (when in Store mode & cart has items) */}
-          {activeTab === 'store' && cart.length > 0 && (
+          {/* Product Detail Bottom Sheet */}
+          {selectedProduct && (
+            <div
+              className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end justify-center"
+              onClick={() => setSelectedProduct(null)}
+            >
+              <div
+                className="w-full max-w-md bg-[#0c0d12] border-t border-x border-[var(--line-strong)] max-h-[85vh] overflow-y-auto shadow-2xl"
+                onClick={e => e.stopPropagation()}
+              >
+                <div className="relative h-48 bg-black border-b border-[var(--line)]">
+                  <img
+                    src={selectedProduct.image}
+                    alt={selectedProduct.name}
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setSelectedProduct(null)}
+                    className="absolute top-3 right-3 p-1.5 bg-black/80 border border-white/20 text-white"
+                    aria-label="Close details"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                  <span className="absolute bottom-3 left-3 px-2 py-0.5 bg-black/85 border border-white/10 text-[10px] font-mono text-white">
+                    {selectedProduct.sku} • {selectedProduct.category}
+                  </span>
+                </div>
+
+                <div className="p-4 space-y-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h3 className="text-base font-bold text-white">{selectedProduct.name}</h3>
+                      <span className="text-[10px] font-mono text-[var(--accent-green)]">
+                        ● In Stock ({selectedProduct.stock} units available)
+                      </span>
+                    </div>
+                    <span className="text-lg font-mono font-bold text-white">
+                      ${selectedProduct.price.toFixed(2)}
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-[var(--muted)] leading-relaxed">
+                    {selectedProduct.description}
+                  </p>
+
+                  {selectedProduct.specs && selectedProduct.specs.length > 0 && (
+                    <div className="p-3 border border-[var(--line)] bg-[var(--card-bg)] space-y-1.5">
+                      <span className="kk-tag block">KEY SPECIFICATIONS</span>
+                      <ul className="space-y-1 text-[11px] font-mono text-white/90">
+                        {selectedProduct.specs.map((spec, idx) => (
+                          <li key={idx} className="flex items-center gap-2">
+                            <span className="w-1 h-1 bg-[var(--accent-blue)] flex-shrink-0" />
+                            <span>{spec}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  <div className="p-2.5 border border-[var(--line)] bg-[var(--card-bg-subtle)] text-[11px] font-mono text-[var(--accent-green)] flex items-center gap-2">
+                    <ShieldCheck className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span>{selectedProduct.warranty || '1-Year Official Warranty'}</span>
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={selectedProduct.stock <= 0}
+                    onClick={() => {
+                      addToCart(selectedProduct);
+                      setSelectedProduct(null);
+                    }}
+                    className="w-full py-3 bg-white text-black font-mono font-bold text-xs hover:bg-slate-200 transition disabled:opacity-40"
+                  >
+                    + Add to Cart (${selectedProduct.price.toFixed(2)})
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Sticky Quick Cart Bottom Bar (browser fallback when native Telegram MainButton is not active) */}
+          {!isNativeTg && activeTab === 'store' && cart.length > 0 && (
             <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto p-3 bg-[#0c0d12]/95 backdrop-blur-md border-t border-[var(--line)] flex items-center justify-between z-40">
               <div>
                 <span className="text-[9px] font-mono text-[var(--subtle)] block">

@@ -3,16 +3,19 @@
 import React, { useState, useEffect } from 'react';
 import { Product } from '@/lib/types';
 import { useCart } from '@/context/CartContext';
-import { 
-  ShoppingBag, 
-  Send, 
+import {
+  ShoppingBag,
+  Send,
   Search,
   ArrowUpRight,
   ShieldCheck,
   Truck,
   CheckCircle2,
   Clock,
-  Smartphone
+  Smartphone,
+  X,
+  Check,
+  Info
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -21,6 +24,8 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [addedId, setAddedId] = useState<string | null>(null);
   const { addToCart } = useCart();
 
   const botUsername = (process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || 'nova123456789_bot').replace(/^@/, '');
@@ -41,14 +46,21 @@ export default function HomePage() {
 
   const filteredProducts = products.filter(p => {
     const matchesCategory = selectedCategory === 'All' || p.category === selectedCategory;
-    const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase()) || 
-                          p.description.toLowerCase().includes(search.toLowerCase()) ||
-                          p.sku.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch =
+      p.name.toLowerCase().includes(search.toLowerCase()) ||
+      p.description.toLowerCase().includes(search.toLowerCase()) ||
+      p.sku.toLowerCase().includes(search.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 
   const getTelegramProductLink = (product: Product) => {
     return `https://t.me/${botUsername}?start=buy_${product.id}`;
+  };
+
+  const handleQuickAdd = (product: Product) => {
+    addToCart(product);
+    setAddedId(product.id);
+    setTimeout(() => setAddedId(prev => (prev === product.id ? null : prev)), 1200);
   };
 
   return (
@@ -84,10 +96,7 @@ export default function HomePage() {
 
           {/* Actions Bar */}
           <div className="flex flex-wrap items-center gap-3 pt-2">
-            <a
-              href="#products"
-              className="kk-btn-primary"
-            >
+            <a href="#products" className="kk-btn-primary">
               <ShoppingBag className="w-3.5 h-3.5" />
               <span>Browse Products</span>
             </a>
@@ -103,10 +112,7 @@ export default function HomePage() {
               <ArrowUpRight className="w-3.5 h-3.5 text-[var(--subtle)]" />
             </a>
 
-            <Link
-              href="/telegram-app"
-              className="kk-btn-secondary"
-            >
+            <Link href="/telegram-app" className="kk-btn-secondary">
               <Smartphone className="w-3.5 h-3.5 text-sky-400" />
               <span>Telegram Mini App</span>
             </Link>
@@ -129,10 +135,10 @@ export default function HomePage() {
               <span className="kk-tag">02 // PAYMENT</span>
               <h3 className="text-xs font-bold text-white flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-[var(--accent-blue)]" />
-                <span>Cash on Delivery</span>
+                <span>Cash on Delivery & KHQR</span>
               </h3>
               <p className="text-[11px] text-[var(--muted)] leading-relaxed">
-                Inspect your items before paying. Zero upfront payment required for local orders.
+                Inspect your items before paying. Supports Cash on Delivery and ABA KHQR / Bakong.
               </p>
             </div>
 
@@ -188,12 +194,12 @@ export default function HomePage() {
               />
             </div>
 
-            <div className="flex items-center border border-[var(--line)] bg-[var(--card-bg-subtle)]">
+            <div className="flex items-center border border-[var(--line)] bg-[var(--card-bg-subtle)] overflow-x-auto max-w-full">
               {categories.map(cat => (
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-3 py-1.5 text-xs font-mono font-medium transition ${
+                  className={`px-3 py-1.5 text-xs font-mono font-medium transition whitespace-nowrap ${
                     selectedCategory === cat
                       ? 'bg-white text-black font-bold'
                       : 'text-[var(--muted)] hover:text-white'
@@ -224,8 +230,12 @@ export default function HomePage() {
                 key={product.id}
                 className="kk-card flex flex-col group overflow-hidden"
               >
-                {/* Image Container with Badges */}
-                <div className="relative aspect-[16/11] overflow-hidden bg-black/40 border-b border-[var(--line)]">
+                {/* Image Container (clickable for specs modal) */}
+                <button
+                  type="button"
+                  onClick={() => setSelectedProduct(product)}
+                  className="relative aspect-[16/11] overflow-hidden bg-black/40 border-b border-[var(--line)] text-left w-full"
+                >
                   <img
                     src={product.image}
                     alt={product.name}
@@ -240,20 +250,28 @@ export default function HomePage() {
                     </span>
                   </div>
 
-                  <div className="absolute bottom-2.5 left-2.5">
+                  <div className="absolute bottom-2.5 left-2.5 right-2.5 flex items-center justify-between">
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-black/80 backdrop-blur-md text-[10px] font-mono text-[var(--accent-green)] border border-white/10">
                       <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-green)]"></span>
                       <span>IN STOCK ({product.stock})</span>
                     </span>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-black/80 backdrop-blur-md text-[10px] font-mono text-white/80 border border-white/10 opacity-0 group-hover:opacity-100 transition">
+                      <Info className="w-3 h-3" />
+                      <span>SPECS</span>
+                    </span>
                   </div>
-                </div>
+                </button>
 
                 {/* Card Info */}
                 <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
                   <div className="space-y-1.5">
-                    <h3 className="font-bold text-white text-base leading-snug group-hover:text-[var(--accent-blue)] transition">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedProduct(product)}
+                      className="text-left font-bold text-white text-base leading-snug group-hover:text-[var(--accent-blue)] transition"
+                    >
                       {product.name}
-                    </h3>
+                    </button>
                     <p className="text-xs text-[var(--muted)] line-clamp-2 leading-relaxed">
                       {product.description}
                     </p>
@@ -270,11 +288,21 @@ export default function HomePage() {
                       </div>
 
                       <button
-                        onClick={() => addToCart(product)}
-                        className="kk-btn-primary text-xs py-2 px-3"
+                        onClick={() => handleQuickAdd(product)}
+                        disabled={product.stock <= 0}
+                        className="kk-btn-primary text-xs py-2 px-3 disabled:opacity-40"
                       >
-                        <ShoppingBag className="w-3.5 h-3.5" />
-                        <span>+ CART</span>
+                        {addedId === product.id ? (
+                          <>
+                            <Check className="w-3.5 h-3.5" />
+                            <span>ADDED</span>
+                          </>
+                        ) : (
+                          <>
+                            <ShoppingBag className="w-3.5 h-3.5" />
+                            <span>+ CART</span>
+                          </>
+                        )}
                       </button>
                     </div>
 
@@ -319,7 +347,7 @@ export default function HomePage() {
               <span className="text-xs font-mono font-bold text-white">01 // WEB CHECKOUT</span>
               <h3 className="text-sm font-bold text-white">Direct on Website</h3>
               <p className="text-xs text-[var(--muted)] leading-relaxed">
-                Add items to your cart, click checkout, enter your phone and delivery address. Fast delivery with Cash on Delivery.
+                Add items to your cart, click checkout, enter your phone and delivery address. Fast delivery with Cash on Delivery or ABA KHQR.
               </p>
             </div>
 
@@ -327,7 +355,7 @@ export default function HomePage() {
               <span className="text-xs font-mono font-bold text-sky-400">02 // TELEGRAM MINI APP</span>
               <h3 className="text-sm font-bold text-white">Embedded Mini App</h3>
               <p className="text-xs text-[var(--muted)] leading-relaxed">
-                Open our Telegram Mini App directly inside your chat. Browse photos, filter categories, and checkout in 10 seconds.
+                Open our Telegram Mini App directly inside your chat. Browse photos, filter categories, checkout in 10 seconds, and receive live Telegram shipping alerts.
               </p>
             </div>
 
@@ -335,7 +363,7 @@ export default function HomePage() {
               <span className="text-xs font-mono font-bold text-indigo-400">03 // TELEGRAM BOT</span>
               <h3 className="text-sm font-bold text-white">Chat With @{botUsername}</h3>
               <p className="text-xs text-[var(--muted)] leading-relaxed">
-                Send /start or /catalog to place conversational orders, choose your destination, and receive instant tracking numbers.
+                Send /start or /catalog to place conversational orders, choose your destination, and receive instant tracking notifications.
               </p>
             </div>
 
@@ -359,6 +387,111 @@ export default function HomePage() {
 
         </div>
       </section>
+
+      {/* Product Detail & Specs Modal */}
+      {selectedProduct && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setSelectedProduct(null)}
+        >
+          <div
+            className="w-full max-w-2xl bg-[#0c0d12] border border-[var(--line-strong)] shadow-2xl overflow-hidden grid grid-cols-1 md:grid-cols-2"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Left Image */}
+            <div className="relative bg-black/50 border-b md:border-b-0 md:border-r border-[var(--line)] min-h-[240px]">
+              <img
+                src={selectedProduct.image}
+                alt={selectedProduct.name}
+                className="w-full h-full object-cover"
+              />
+              <span className="absolute top-3 left-3 px-2 py-0.5 bg-black/85 border border-white/10 text-[10px] font-mono text-white">
+                {selectedProduct.sku}
+              </span>
+            </div>
+
+            {/* Right Specs & Actions */}
+            <div className="p-6 flex flex-col justify-between space-y-5">
+              <div className="space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <span className="text-[10px] font-mono text-[var(--accent-purple)] uppercase">
+                      {selectedProduct.category}
+                    </span>
+                    <h3 className="text-lg font-bold text-white leading-snug mt-0.5">
+                      {selectedProduct.name}
+                    </h3>
+                  </div>
+                  <button
+                    onClick={() => setSelectedProduct(null)}
+                    className="p-1 border border-[var(--line)] hover:border-white text-[var(--muted)] hover:text-white transition"
+                    aria-label="Close"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <p className="text-xs text-[var(--muted)] leading-relaxed">
+                  {selectedProduct.description}
+                </p>
+
+                {selectedProduct.specs && selectedProduct.specs.length > 0 && (
+                  <div className="pt-2 space-y-1.5">
+                    <span className="kk-tag block">TECHNICAL SPECS</span>
+                    <ul className="space-y-1 text-xs font-mono text-white/90">
+                      {selectedProduct.specs.map((spec, idx) => (
+                        <li key={idx} className="flex items-center gap-2">
+                          <span className="w-1 h-1 bg-[var(--accent-blue)] flex-shrink-0" />
+                          <span>{spec}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                <div className="p-2.5 border border-[var(--line)] bg-[var(--card-bg-subtle)] text-[11px] font-mono text-[var(--accent-green)] flex items-center gap-2">
+                  <ShieldCheck className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span>{selectedProduct.warranty || '1-Year Official Warranty'}</span>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-[var(--line)] space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-2xl font-bold font-mono text-white">
+                    ${selectedProduct.price.toFixed(2)}
+                  </span>
+                  <span className="text-[10px] font-mono text-[var(--accent-green)]">
+                    ● {selectedProduct.stock} units in stock
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => {
+                      handleQuickAdd(selectedProduct);
+                      setSelectedProduct(null);
+                    }}
+                    className="kk-btn-primary text-xs py-2.5 w-full"
+                  >
+                    <ShoppingBag className="w-3.5 h-3.5" />
+                    <span>+ ADD TO CART</span>
+                  </button>
+
+                  <a
+                    href={getTelegramProductLink(selectedProduct)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="py-2.5 px-3 bg-[var(--card-bg-subtle)] border border-[var(--line)] hover:border-sky-400 text-xs font-mono text-sky-400 hover:text-white transition flex items-center justify-center gap-1.5"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    <span>TELEGRAM ↗</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

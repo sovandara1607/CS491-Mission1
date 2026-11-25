@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getOrders, createOrder, updateOrderStatus, getOrderById } from '@/lib/db';
 import { OrderStatus } from '@/lib/types';
+import { notifyAdminNewOrder, notifyCustomerNewOrder, notifyCustomerOrderStatus } from '@/lib/telegramBotEngine';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
   try {
@@ -25,7 +28,17 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { customerName, customerPhone, customerAddress, items, totalAmount, paymentMethod, channel, notes } = body;
+    const {
+      customerName,
+      customerPhone,
+      customerAddress,
+      items,
+      totalAmount,
+      paymentMethod,
+      channel,
+      channelUserId,
+      notes
+    } = body;
 
     if (!customerName || !items || items.length === 0) {
       return NextResponse.json({ success: false, error: 'Missing required order fields' }, { status: 400 });
@@ -40,9 +53,16 @@ export async function POST(request: Request) {
       currency: 'USD',
       status: 'CONFIRMED',
       channel: channel || 'web',
+      channelUserId: channelUserId ? String(channelUserId) : undefined,
       paymentMethod: paymentMethod || 'COD',
       notes: notes || 'Web Checkout Order'
     });
+
+    // Fire Telegram notifications in parallel without blocking order response on failure
+    await Promise.allSettled([
+      notifyAdminNewOrder(newOrder),
+      newOrder.channelUserId ? notifyCustomerNewOrder(newOrder) : Promise.resolve()
+    ]);
 
     return NextResponse.json({ success: true, order: newOrder }, { status: 201 });
   } catch (error) {
@@ -65,7 +85,13 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ success: false, error: 'Order not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, order: updated });
+    let telegramNotified = false;
+    if (updated.channelUserId) {
+      const res = await notifyCustomerOrderStatus(updated);
+      telegramNotified = !!res?.ok;
+    }
+
+    return NextResponse.json({ success: true, order: updated, telegramNotified });
   } catch (error) {
     return NextResponse.json({ success: false, error: 'Failed to update order status' }, { status: 500 });
   }

@@ -2,20 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { Order, OrderStatus, OrderChannel } from '@/lib/types';
-import { 
-  Send, 
-  Globe, 
-  Search, 
-  RefreshCw, 
-  CheckCircle2, 
-  Clock, 
-  Truck, 
-  Package, 
-  XCircle,
-  ExternalLink,
-  ChevronRight,
-  TrendingUp,
-  AlertCircle
+import {
+  Send,
+  Globe,
+  Search,
+  RefreshCw,
+  Bell
 } from 'lucide-react';
 
 export default function AdminPage() {
@@ -26,18 +18,19 @@ export default function AdminPage() {
   const [channelFilter, setChannelFilter] = useState<'all' | 'telegram' | 'web'>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [feedback, setFeedback] = useState<{ type: 'ok' | 'err'; msg: string } | null>(null);
 
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/orders');
+      const res = await fetch('/api/orders', { cache: 'no-store' });
       const data = await res.json();
       if (data.success) {
         setOrders(data.orders);
-        if (selectedOrder) {
-          const updated = data.orders.find((o: Order) => o.id === selectedOrder.id);
-          if (updated) setSelectedOrder(updated);
-        }
+        setSelectedOrder(prev => {
+          if (!prev) return null;
+          return data.orders.find((o: Order) => o.id === prev.id) || prev;
+        });
       }
     } catch (err) {
       console.error(err);
@@ -48,12 +41,13 @@ export default function AdminPage() {
 
   useEffect(() => {
     fetchOrders();
-    const interval = setInterval(fetchOrders, 8000);
+    const interval = setInterval(fetchOrders, 10000);
     return () => clearInterval(interval);
   }, []);
 
   const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
     setUpdatingStatus(true);
+    setFeedback(null);
     try {
       const res = await fetch(`/api/orders/${orderId}`, {
         method: 'PATCH',
@@ -66,15 +60,24 @@ export default function AdminPage() {
         if (selectedOrder?.id === orderId) {
           setSelectedOrder(data.order);
         }
+        setFeedback({
+          type: 'ok',
+          msg: data.telegramNotified
+            ? `Updated #${orderId} to ${newStatus} • Customer notified on Telegram`
+            : `Updated #${orderId} to ${newStatus}`
+        });
+        setTimeout(() => setFeedback(null), 4000);
+      } else {
+        setFeedback({ type: 'err', msg: data.error || 'Failed to update status' });
       }
     } catch (err) {
       console.error(err);
+      setFeedback({ type: 'err', msg: 'Network error updating status' });
     } finally {
       setUpdatingStatus(false);
     }
   };
 
-  // Metrics
   const totalRevenue = orders.reduce((sum, o) => sum + o.totalAmount, 0);
   const webOrders = orders.filter(o => o.channel === 'web');
   const tgOrders = orders.filter(o => o.channel === 'telegram');
@@ -82,7 +85,7 @@ export default function AdminPage() {
   const filteredOrders = orders.filter(order => {
     const matchesChannel = channelFilter === 'all' || order.channel === channelFilter;
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
-    const matchesSearch = 
+    const matchesSearch =
       order.id.toLowerCase().includes(search.toLowerCase()) ||
       order.customerName.toLowerCase().includes(search.toLowerCase()) ||
       order.customerPhone.toLowerCase().includes(search.toLowerCase()) ||
@@ -142,7 +145,7 @@ export default function AdminPage() {
             Omnichannel Orders
           </h1>
           <p className="text-xs text-[var(--muted)] font-mono">
-            Real-time feed across Web Store and Telegram Bot & Mini App.
+            Real-time feed across Web Store and Telegram Bot & Mini App. Status changes automatically push Telegram alerts.
           </p>
         </div>
 
@@ -155,6 +158,20 @@ export default function AdminPage() {
           <span>Refresh Feed</span>
         </button>
       </div>
+
+      {/* Status Action Feedback Banner */}
+      {feedback && (
+        <div
+          className={`p-3 border text-xs font-mono flex items-center gap-2 ${
+            feedback.type === 'ok'
+              ? 'border-emerald-400/40 bg-emerald-950/30 text-emerald-300'
+              : 'border-rose-400/40 bg-rose-950/30 text-rose-300'
+          }`}
+        >
+          <Bell className="w-3.5 h-3.5 flex-shrink-0" />
+          <span>{feedback.msg}</span>
+        </div>
+      )}
 
       {/* Metrics Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 border border-[var(--line)] bg-[var(--card-bg)] divide-y sm:divide-y-0 sm:divide-x divide-[var(--line)]">
@@ -195,10 +212,8 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* Controls Bar: Search & Filters */}
+      {/* Controls Bar */}
       <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
-        
-        {/* Search */}
         <div className="relative flex-1 max-w-md">
           <Search className="w-3.5 h-3.5 text-[var(--subtle)] absolute left-3 top-1/2 -translate-y-1/2" />
           <input
@@ -210,10 +225,7 @@ export default function AdminPage() {
           />
         </div>
 
-        {/* Channel & Status Filters */}
         <div className="flex flex-wrap items-center gap-2">
-          
-          {/* Channel Filter */}
           <div className="flex items-center border border-[var(--line)] bg-[var(--card-bg-subtle)]">
             {(['all', 'telegram', 'web'] as const).map(ch => (
               <button
@@ -230,7 +242,6 @@ export default function AdminPage() {
             ))}
           </div>
 
-          {/* Status Filter */}
           <select
             value={statusFilter}
             onChange={e => setStatusFilter(e.target.value)}
@@ -243,7 +254,6 @@ export default function AdminPage() {
             <option value="DELIVERED">DELIVERED</option>
             <option value="CANCELLED">CANCELLED</option>
           </select>
-
         </div>
       </div>
 
@@ -276,7 +286,7 @@ export default function AdminPage() {
                   }`}
                 >
                   <div className="space-y-1.5 min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-mono font-bold text-xs text-white">#{order.id}</span>
                       {getChannelBadge(order.channel)}
                       {getStatusBadge(order.status)}
@@ -311,9 +321,7 @@ export default function AdminPage() {
         <div className="lg:col-span-5 border border-[var(--line)] bg-[var(--card-bg)] sticky top-24">
           <div className="p-4 bg-[var(--card-bg-subtle)] border-b border-[var(--line)] flex items-center justify-between text-xs font-mono">
             <span className="font-bold text-white">ORDER INSPECTOR</span>
-            {selectedOrder && (
-              <span className="text-[var(--subtle)]">#{selectedOrder.id}</span>
-            )}
+            {selectedOrder && <span className="text-[var(--subtle)]">#{selectedOrder.id}</span>}
           </div>
 
           {selectedOrder ? (
@@ -333,7 +341,12 @@ export default function AdminPage() {
 
               {/* Status Update Actions */}
               <div className="space-y-2">
-                <span className="text-[10px] text-[var(--subtle)] uppercase">Change Status:</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] text-[var(--subtle)] uppercase">Change Status:</span>
+                  {selectedOrder.channelUserId && (
+                    <span className="text-[10px] text-sky-400">Auto-notifies Telegram</span>
+                  )}
+                </div>
                 <div className="grid grid-cols-2 gap-1.5">
                   {(['CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'] as OrderStatus[]).map(st => (
                     <button
@@ -394,7 +407,7 @@ export default function AdminPage() {
               {/* Timestamp */}
               <div className="text-[10px] text-[var(--subtle)] pt-2 border-t border-[var(--line)] flex justify-between">
                 <span>Created: {new Date(selectedOrder.createdAt).toLocaleString()}</span>
-                <span>Payment: {selectedOrder.paymentMethod}</span>
+                <span>Payment: {selectedOrder.paymentMethod === 'BANK_TRANSFER' ? 'ABA KHQR' : selectedOrder.paymentMethod}</span>
               </div>
 
             </div>

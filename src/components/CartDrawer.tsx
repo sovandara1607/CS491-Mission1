@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import { useCart } from '@/context/CartContext';
-import { X, Trash2, Plus, Minus, ShoppingBag, Send, ShieldCheck, ArrowRight } from 'lucide-react';
+import KhqrCard from '@/components/KhqrCard';
+import { X, Trash2, Plus, Minus, Send } from 'lucide-react';
 
 export default function CartDrawer() {
   const { cart, removeFromCart, updateQuantity, clearCart, totalAmount, isCartOpen, setIsCartOpen } = useCart();
@@ -13,13 +14,15 @@ export default function CartDrawer() {
   const [paymentMethod, setPaymentMethod] = useState<'COD' | 'BANK_TRANSFER'>('COD');
   const [orderSuccess, setOrderSuccess] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   if (!isCartOpen) return null;
 
   const handleWebCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!customerName || !customerPhone || !customerAddress) {
-      alert('Please fill in your name, phone number, and delivery address.');
+    setErrorMsg('');
+    if (!customerName.trim() || !customerPhone.trim() || !customerAddress.trim()) {
+      setErrorMsg('Please fill in your name, phone number, and delivery address.');
       return;
     }
 
@@ -29,9 +32,9 @@ export default function CartDrawer() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          customerName,
-          customerPhone,
-          customerAddress,
+          customerName: customerName.trim(),
+          customerPhone: customerPhone.trim(),
+          customerAddress: customerAddress.trim(),
           items: cart,
           totalAmount,
           paymentMethod,
@@ -46,11 +49,11 @@ export default function CartDrawer() {
         clearCart();
         setIsCheckingOut(false);
       } else {
-        alert('Checkout error: ' + (data.error || 'Please try again.'));
+        setErrorMsg(data.error || 'Checkout error. Please try again.');
       }
     } catch (err) {
       console.error(err);
-      alert('Network error placing order');
+      setErrorMsg('Network error placing order. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -58,7 +61,10 @@ export default function CartDrawer() {
 
   const handleTelegramOrder = () => {
     const botUser = (process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || 'nova123456789_bot').replace(/^@/, '');
-    const url = `https://t.me/${botUser}?start=catalog`;
+    const firstItem = cart[0];
+    const url = firstItem
+      ? `https://t.me/${botUser}?start=buy_${firstItem.productId}`
+      : `https://t.me/${botUser}?start=catalog`;
     window.open(url, '_blank');
   };
 
@@ -82,6 +88,7 @@ export default function CartDrawer() {
                 setIsCartOpen(false);
                 setIsCheckingOut(false);
                 setOrderSuccess(null);
+                setErrorMsg('');
               }}
               className="p-1 border border-[var(--line)] hover:border-white text-[var(--muted)] hover:text-white transition"
             >
@@ -93,7 +100,7 @@ export default function CartDrawer() {
           <div className="flex-1 overflow-y-auto p-6 space-y-4">
             
             {orderSuccess ? (
-              <div className="p-6 border border-[var(--line)] bg-[var(--card-bg)] text-center space-y-4 my-8">
+              <div className="p-6 border border-[var(--line)] bg-[var(--card-bg)] text-center space-y-4 my-4">
                 <div className="w-10 h-10 bg-white text-black flex items-center justify-center mx-auto font-bold font-mono">
                   ✓
                 </div>
@@ -107,12 +114,18 @@ export default function CartDrawer() {
                 <div className="p-3 border border-[var(--line)] bg-[var(--input-bg)] text-left text-xs font-mono space-y-1.5">
                   <p className="flex justify-between"><span className="text-[var(--subtle)]">Customer:</span> <span className="font-bold text-white">{orderSuccess.customerName}</span></p>
                   <p className="flex justify-between"><span className="text-[var(--subtle)]">Total:</span> <span className="font-bold text-white">${orderSuccess.totalAmount.toFixed(2)}</span></p>
-                  <p className="flex justify-between"><span className="text-[var(--subtle)]">Payment:</span> <span>Cash on Delivery (COD)</span></p>
+                  <p className="flex justify-between"><span className="text-[var(--subtle)]">Payment:</span> <span>{orderSuccess.paymentMethod === 'BANK_TRANSFER' ? 'ABA KHQR' : 'Cash on Delivery (COD)'}</span></p>
                   <p className="flex justify-between"><span className="text-[var(--subtle)]">Shipping to:</span> <span className="truncate max-w-[180px]">{orderSuccess.customerAddress}</span></p>
                 </div>
 
+                {orderSuccess.paymentMethod === 'BANK_TRANSFER' && (
+                  <div className="text-left">
+                    <KhqrCard amountUsd={orderSuccess.totalAmount} orderRef={orderSuccess.id} />
+                  </div>
+                )}
+
                 <p className="text-xs text-[var(--muted)] leading-relaxed">
-                  Thank you! Our courier will call your phone before arriving.
+                  Thank you! Our courier will call your phone before arriving. You can also track <strong className="font-mono text-white">{orderSuccess.id}</strong> inside our Telegram Bot.
                 </p>
 
                 <button
@@ -138,12 +151,21 @@ export default function CartDrawer() {
                   <span className="text-xs font-mono font-bold text-white">Shipping Details</span>
                   <button
                     type="button"
-                    onClick={() => setIsCheckingOut(false)}
+                    onClick={() => {
+                      setIsCheckingOut(false);
+                      setErrorMsg('');
+                    }}
                     className="text-[11px] font-mono text-[var(--accent-purple)] hover:underline"
                   >
                     ← Back to Cart
                   </button>
                 </div>
+
+                {errorMsg && (
+                  <div className="p-2.5 border border-rose-500/40 bg-rose-950/30 text-rose-300 text-xs font-mono">
+                    {errorMsg}
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-[10px] font-mono text-[var(--subtle)] uppercase mb-1">
@@ -215,10 +237,14 @@ export default function CartDrawer() {
                       }`}
                     >
                       <span className="block text-white">ABA KHQR</span>
-                      <span className="text-[10px] text-[var(--subtle)]">Scan upon delivery</span>
+                      <span className="text-[10px] text-[var(--subtle)]">Scan via Bakong / ABA</span>
                     </button>
                   </div>
                 </div>
+
+                {paymentMethod === 'BANK_TRANSFER' && (
+                  <KhqrCard amountUsd={totalAmount} />
+                )}
 
                 <div className="p-3 border border-[var(--line)] bg-[var(--card-bg-subtle)] space-y-1 text-xs font-mono">
                   <div className="flex justify-between text-[var(--muted)]">
@@ -299,7 +325,6 @@ export default function CartDrawer() {
                 <span className="text-white">${totalAmount.toFixed(2)}</span>
               </div>
 
-              {/* Standard Web Checkout */}
               <button
                 onClick={() => setIsCheckingOut(true)}
                 className="w-full py-2.5 bg-white text-black font-mono font-bold text-xs hover:bg-slate-200 transition flex items-center justify-center gap-2"
@@ -315,7 +340,6 @@ export default function CartDrawer() {
                 <div className="flex-grow border-t border-[var(--line)]"></div>
               </div>
 
-              {/* Telegram Checkout */}
               <button
                 onClick={handleTelegramOrder}
                 className="w-full py-2 bg-[var(--card-bg-subtle)] border border-[var(--line)] hover:border-sky-400 text-sky-400 font-mono text-xs font-bold transition flex items-center justify-center gap-2"
